@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hospital-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: hospital
+      MYSQL_USER: hospital
+      MYSQL_PASSWORD: hospital1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql/data:/var/lib/mysql
+      - ./docker/mysql/backup:/backup
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - hospital-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:latest
+    container_name: hospital-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_DATABASE: mydatabase
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./docker/mongodb/data:/data/db
+      - ./docker/mongodb/backup:/backup
+      - ./docker/mongodb/init:/docker-entrypoint-initdb.d
+    command: mongod --auth
+    networks:
+      - hospital-network
+    restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: elasticsearch:7.17.11
+    container_name: hospital-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - ./docker/elasticsearch/data:/usr/share/elasticsearch/data
+      - ./docker/elasticsearch/backup:/usr/share/elasticsearch/backup
+      - ./docker/elasticsearch/config:/usr/share/elasticsearch/config
+      - ./docker/elasticsearch/init:/usr/share/elasticsearch/init
+    networks:
+      - hospital-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q 'status.*green'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    user: "1000:1000"
+    command: >
+      bash -c "
+        elasticsearch &
+        sleep 30 &&
+        /usr/share/elasticsearch/init/init.sh
+      "
+
+  # 모니터링을 위한 Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hospital-prometheus
+    volumes:
+      - ./docker/prometheus/config:/etc/prometheus
+      - ./docker/prometheus/data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - hospital-network
+    restart: unless-stopped
+
+  # 로그 수집을 위한 ELK Stack
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.12.1
+    container_name: hospital-logstash
+    volumes:
+      - ./docker/logstash/config:/usr/share/logstash/config
+      - ./docker/logstash/pipeline:/usr/share/logstash/pipeline
+    networks:
+      - hospital-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  mongodb_data:
+  elasticsearch_data:
+  prometheus_data:
+
+networks:
+  hospital-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16 
