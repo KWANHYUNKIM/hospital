@@ -1,0 +1,94 @@
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Application Properties ###
+src/main/resources/application*.properties
+src/main/resources/application*.yml
+src/main/resources/application*.yaml
+
+### Docker ###
+docker/
+
+### 상위 폴더 제외 ###
+../.npm/
+../.nvm/
+../.oracle_jre_usage/
+../.packettracer/
+../.pgadmin/
+../.pgpass
+../.profile
+../.psql_history
+../.pub-cache/
+../.pylint.d/
+../.python_history
+../.quokka/
+../.rbenv/
+../.rvm/
+../.ssh/
+../.subversion/
+../.tcshrc
+../.tooling/
+../.viminfo
+../.vmware/
+../.vscode/
+../.vuerc
+../.wdm/
+../.xonshrc
+../.xpdfrc
+../.yarnrc
+../.zlogin
+../.zprofile
+../.zsh_history
+../.zsh_sessions/
+../.zshrc
+../.zshrc.save
+../Applications/
+../Applications (Parallels)/
+../BlockNote_bippobippo119/
+../CAB/
+../Creative Cloud Files Personal Account molba06@naver.com 8E5B114F618A797D0A495EE9@AdobeID/
+../Cisco Packet Tracer 8.0.1/
+../Documents/
+../Downloads/
+../Flutter/
+../Library/
+../Movies/
+../Music/
+../Pictures/
+../Projects/
+../Public/
+../Virtual Machines.localized/
+../__pycache__/
+../eclipse-workspace/
+../venv/
