@@ -75,3 +75,7 @@ out/
 *.log
 *.swp
 *.swo
+
+# Google Cloud credentials
+server/src/main/resources/google-cloud-credentials.json
+**/google-cloud-credentials.json
