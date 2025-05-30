@@ -40,55 +40,38 @@ src/main/resources/application*.yaml
 ### Docker ###
 docker/
 
-### 상위 폴더 제외 ###
-../.npm/
-../.nvm/
-../.oracle_jre_usage/
-../.packettracer/
-../.pgadmin/
-../.pgpass
-../.profile
-../.psql_history
-../.pub-cache/
-../.pylint.d/
-../.python_history
-../.quokka/
-../.rbenv/
-../.rvm/
-../.ssh/
-../.subversion/
-../.tcshrc
-../.tooling/
-../.viminfo
-../.vmware/
-../.vscode/
-../.vuerc
-../.wdm/
-../.xonshrc
-../.xpdfrc
-../.yarnrc
-../.zlogin
-../.zprofile
-../.zsh_history
-../.zsh_sessions/
-../.zshrc
-../.zshrc.save
-../Applications/
-../Applications (Parallels)/
-../BlockNote_bippobippo119/
-../CAB/
-../Creative Cloud Files Personal Account molba06@naver.com 8E5B114F618A797D0A495EE9@AdobeID/
-../Cisco Packet Tracer 8.0.1/
-../Documents/
-../Downloads/
-../Flutter/
-../Library/
-../Movies/
-../Music/
-../Pictures/
-../Projects/
-../Public/
-../Virtual Machines.localized/
-../__pycache__/
-../eclipse-workspace/
-../venv/
+### Google Cloud ###
+src/main/resources/google-cloud-credentials.json
+
+# Environment variables
+.env
+.env.*
+# Local configuration
+*.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+build/
+dist/
+out/
+
+# Misc
+*.log
+*.swp
+*.swo
