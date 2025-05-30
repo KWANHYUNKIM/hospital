@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { getApiUrl } from '../../utils/api';
-import CategoryTree from '../../components/CategoryTree';
+import CategoryTree from '../../components/community/CategoryTree';
 
 const EditBoardPage = () => {
   const { id } = useParams();

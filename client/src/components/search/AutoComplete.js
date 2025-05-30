@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchAutoComplete } from '../service/api';
+import { fetchAutoComplete, getApiUrl } from '../../service/api';
 
 const AutoComplete = ({ searchQuery, setSearchQuery }) => {
   const [suggestions, setSuggestions] = useState({ hospital: [] });

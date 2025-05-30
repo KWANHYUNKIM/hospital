@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { getApiUrl } from '../utils/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { logout } from '../../utils/api';
+import { getApiUrl } from '../../utils/api';
 
 const NavigationBar = () => {
   const { user, userProfileImage, logout } = useAuth();

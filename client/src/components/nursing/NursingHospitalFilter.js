@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import FilterDropdown from './FilterDropdown';
-import { fetchNursingHospitalAutoComplete, fetchNursingHospitals } from '../service/api';
+import FilterDropdown from '../search/FilterDropdown';
+import { fetchNursingHospitalAutoComplete, fetchNursingHospitals, getApiUrl } from '../../service/api';
 
 const filterRegions = [
   { label: "전국", icon: "🌍" },

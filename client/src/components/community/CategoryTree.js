@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { api } from '../utils/api';
+import axios from 'axios';
+import { getApiUrl } from '../../utils/api';
 
 const CategoryTree = ({ onSelectCategory = () => {}, selectedCategoryId = null }) => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const CategoryTree = ({ onSelectCategory = () => {}, selectedCategoryId = null }
     const loadCategoryTypes = async () => {
       try {
         setLoading(prev => ({ ...prev, types: true }));
-        const response = await api.get('/api/boards/category-types');
+        const response = await axios.get(`${getApiUrl()}/api/boards/category-types`);
         setCategoryTypes(response.data);
         setLoading(prev => ({ ...prev, types: false }));
       } catch (error) {
@@ -46,7 +47,7 @@ const CategoryTree = ({ onSelectCategory = () => {}, selectedCategoryId = null }
     const loadCategories = async () => {
       try {
         setLoading(prev => ({ ...prev, categories: true }));
-        const response = await api.get('/api/boards/categories');
+        const response = await axios.get(`${getApiUrl()}/api/boards/categories`);
         setCurrentCategories(response.data);
         setLoading(prev => ({ ...prev, categories: false }));
       } catch (error) {

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import FilterDropdown from "../components/FilterDropdown";
+import FilterDropdown from '../components/search/FilterDropdown';
 import { searchPharmacies, fetchAllPharmacies } from "../service/api";
-import PharmacyAutoComplete from "../components/PharmacyAutoComplete";
+import PharmacyAutoComplete from '../components/pharmacy/PharmacyAutoComplete';
 
 const filterRegions = [
   { label: "전국", icon: "🌍" },

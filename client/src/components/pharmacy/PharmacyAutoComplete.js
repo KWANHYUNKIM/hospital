@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../utils/api";
+import { getApiUrl } from '../../utils/api';
+import axios from 'axios';
 
 const PharmacyAutoComplete = ({ searchQuery, setSearchQuery, onSearch }) => {
   const [suggestions, setSuggestions] = useState({ pharmacy: [] });
@@ -18,7 +19,7 @@ const PharmacyAutoComplete = ({ searchQuery, setSearchQuery, onSearch }) => {
       return;
     }
     const timer = setTimeout(() => {
-      api.get(`/api/pharmacy-autocomplete?query=${encodeURIComponent(inputValue)}`)
+      axios.get(`${getApiUrl()}/api/pharmacy-autocomplete?query=${encodeURIComponent(inputValue)}`)
         .then((response) => {
           setSuggestions({ pharmacy: response.data.pharmacy || [] });
           setIsDropdownOpen(true);

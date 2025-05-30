@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { fetchMapTypeData, fetchClusterData } from '../service/api';
+import { fetchMapTypeData, fetchClusterData, getApiUrl } from '../../service/api';
 // import MapCategoryTabs from './MapCategoryTabs';
 //  import MapFilterBar from './MapFilterBar';
 import debounce from 'lodash.debounce';
-import MapToolbar from './map/MapToolbar';
-import InfoSidebar from './InfoSidebar';
+import MapToolbar from './MapToolbar';
+import InfoSidebar from '../ui/InfoSidebar';
 import MapSearchBar from './MapSearchBar';
-import MapCluster from './clusters/MapCluster';
-import ClusterMarker from './markers/ClusterMarker';
-import ClusterInfoWindow from './markers/ClusterInfoWindow';
+import MapCluster from '../clusters/MapCluster';
+import ClusterMarker from '../markers/ClusterMarker';
+import ClusterInfoWindow from '../markers/ClusterInfoWindow';
 
 const MapPage = () => {
   const mapRef = useRef(null);

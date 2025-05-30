@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { api } from '../utils/api';
+import { api } from '../../utils/api';
 import axios from 'axios';
-import { getApiUrl } from '../utils/api';
-import { useAuth } from '../contexts/AuthContext';
+import { getApiUrl } from '../../utils/api';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Comment = ({ onSubmit, boardId, comment }) => {

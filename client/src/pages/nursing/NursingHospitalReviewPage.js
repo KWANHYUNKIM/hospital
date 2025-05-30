@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
-import HospitalReview from '../../components/HospitalReview';
+import HospitalReview from '../../components/hospital/HospitalReview';
 import { useAuth } from '../../contexts/AuthContext';
 import { fetchNursingHospitalDetail } from '../../service/api';
 

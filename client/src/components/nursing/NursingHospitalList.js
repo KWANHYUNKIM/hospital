@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { fetchNursingHospitals } from "../service/api";
-import HospitalMajorList from "./HospitalMajorList";
-import DistanceInfo from "./DistanceInfo";
-import HealthCenterBanner from './HealthCenterBanner';
-import OperatingStatus from "../components/OperatingStatus";
+import { fetchNursingHospitals, getApiUrl } from "../../service/api";
+import HospitalMajorList from "../hospital/HospitalMajorList";
+import DistanceInfo from "../hospital/DistanceInfo";
+import HealthCenterBanner from '../health/HealthCenterBanner';
+import OperatingStatus from "../hospital/OperatingStatus";
 import NursingHospitalFilter from './NursingHospitalFilter';
 
 const NursingHospitalList = () => {

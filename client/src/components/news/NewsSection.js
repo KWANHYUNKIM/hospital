@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HealingNewsFrame from './HealingNewsFrame';
-import RecommendChannels from './RecommendChannels';
-import RecommendPlaylist from './RecommendPlaylist';
+import RecommendChannels from '../recommend/RecommendChannels';
+import RecommendPlaylist from '../recommend/RecommendPlaylist';
 import RecommendHotNews from './RecommendHotNews';
-import { getNewsCategories } from '../service/newsApi';
+import { getNewsCategories, getApiUrl } from '../../service/newsApi';
 
 export default function NewsSection() {
   const [categories, setCategories] = useState([]);

@@ -1,43 +1,36 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from '../utils/axios';
-import { useAuth } from '../contexts/AuthContext';
+import axios from '../../utils/axios';
+import { useAuth } from '../../contexts/AuthContext';
 
-const NaverCallback = () => {
+const GoogleCallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
   const [error, setError] = useState(null);
-  const hasCalledApi = useRef(false);
+  const hasHandledRef = useRef(false);
 
   useEffect(() => {
-    const handleNaverCallback = async () => {
+    const handleGoogleCallback = async () => {
+      if (hasHandledRef.current) return;
+      hasHandledRef.current = true;
+
       try {
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
-        const returnedState = searchParams.get('state');
+        const errorParam = searchParams.get('error');
+
+        if (errorParam) {
+          setError('구글 로그인 중 오류가 발생했습니다.');
+          return;
+        }
 
         if (!code) {
           setError('인증 코드가 없습니다.');
           return;
         }
 
-        if (!returnedState) {
-          setError('State 파라미터가 누락되었습니다.');
-          return;
-        }
-
-        if (hasCalledApi.current) {
-          return;
-        }
-        hasCalledApi.current = true;
-
-        const response = await axios.post('/api/auth/naver/callback', {
-          code,
-          state: returnedState
-        }, {
-          withCredentials: true
-        });
+        const response = await axios.post('/auth/google/callback', { code });
 
         if (response.data.success) {
           if (response.data.isNewUser) {
@@ -49,7 +42,9 @@ const NaverCallback = () => {
                   nickname: response.data.nickname,
                   profile_image: response.data.profile_image,
                   social_id: response.data.social_id,
-                  provider: 'naver'
+                  provider: response.data.provider,
+                  name: response.data.name,
+                  given_name: response.data.given_name
                 }
               }
             });
@@ -62,9 +57,9 @@ const NaverCallback = () => {
           setError(response.data.message || '로그인 처리 중 오류가 발생했습니다.');
         }
       } catch (error) {
-        console.error('네이버 로그인 처리 중 오류 발생:', error);
+        console.error('구글 로그인 처리 중 오류 발생:', error);
         if (error.response?.status === 404) {
-          setError('네이버 로그인 설정을 찾을 수 없습니다.');
+          setError('구글 로그인 설정을 찾을 수 없습니다.');
         } else if (error.response?.data?.error === 'invalid_grant') {
           setError('인증 코드가 만료되었습니다. 다시 로그인해주세요.');
         } else if (error.response?.data?.error === 'invalid_request') {
@@ -75,7 +70,7 @@ const NaverCallback = () => {
       }
     };
 
-    handleNaverCallback();
+    handleGoogleCallback();
   }, [navigate, location, login]);
 
   if (error) {
@@ -105,4 +100,4 @@ const NaverCallback = () => {
   );
 };
 
-export default NaverCallback; 
+export default GoogleCallback; 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { fetchHospitalReviews, submitHospitalReview, updateHospitalReview, deleteHospitalReview } from '../service/api';
+import { fetchHospitalReviews, submitHospitalReview, updateHospitalReview, deleteHospitalReview, getApiUrl } from '../../service/api';
 
 const HospitalReview = ({ hospitalId, hospitalType }) => {
   const { user } = useAuth();
