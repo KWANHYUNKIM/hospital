@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, getApiUrl } from '../utils/api';
-import { useAuth } from '../contexts/AuthContext';
-import axiosInstance from '../utils/axios';
+import { useAuth } from '../../contexts/AuthContext';
+import { getApiUrl } from '../../utils/api';
+import axios from '../../utils/axios';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -33,8 +33,8 @@ const LoginPage = () => {
     const fetchSocialSettings = async () => {
       try {
         const [kakaoResponse, naverResponse] = await Promise.all([
-          api.get('/api/auth/social-config/kakao'),
-          api.get('/api/auth/social-config/naver')
+          axios.get('/auth/social-config/kakao'),
+          axios.get('/auth/social-config/naver')
         ]);
         
         setKakaoSettings(kakaoResponse.data);
@@ -60,7 +60,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/api/auth/login', {
+      const response = await axios.post('/auth/login', {
         username: formData.username,
         password: formData.password
       });
@@ -87,7 +87,7 @@ const LoginPage = () => {
 
   const handleNaverLogin = async () => {
     try {
-      const response = await axiosInstance.get('/auth/naver/start');
+      const response = await axios.get('/auth/naver/start');
 
       if (response.data && response.data.success) {
         window.location.href = response.data.naverAuthUrl;
@@ -111,7 +111,7 @@ const LoginPage = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      const response = await api.get('/api/auth/social-config/google');
+      const response = await axios.get('/auth/social-config/google');
       const { client_id, redirect_uri } = response.data;
       
       if (!client_id || !redirect_uri) {
