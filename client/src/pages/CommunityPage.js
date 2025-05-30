@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { getApiUrl } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
-import CategoryTree from '../components/CategoryTree';
+import CategoryTree from '../components/community/CategoryTree';
 
 const CommunityPage = () => {
   const navigate = useNavigate();

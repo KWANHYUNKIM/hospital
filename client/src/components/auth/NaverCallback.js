@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from '../utils/axios';
-import { useAuth } from '../contexts/AuthContext';
+import axios from '../../utils/axios';
+import { useAuth } from '../../contexts/AuthContext';
 
-const KakaoCallback = () => {
+const NaverCallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
@@ -11,13 +11,19 @@ const KakaoCallback = () => {
   const hasCalledApi = useRef(false);
 
   useEffect(() => {
-    const handleKakaoCallback = async () => {
+    const handleNaverCallback = async () => {
       try {
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
+        const returnedState = searchParams.get('state');
 
         if (!code) {
           setError('인증 코드가 없습니다.');
+          return;
+        }
+
+        if (!returnedState) {
+          setError('State 파라미터가 누락되었습니다.');
           return;
         }
 
@@ -26,10 +32,16 @@ const KakaoCallback = () => {
         }
         hasCalledApi.current = true;
 
-        const response = await axios.post('/auth/kakao/callback', { code });
+        const response = await axios.post('/api/auth/naver/callback', {
+          code,
+          state: returnedState
+        }, {
+          withCredentials: true
+        });
 
         if (response.data.success) {
           if (response.data.isNewUser) {
+            // 새로운 사용자는 회원가입 페이지로 이동
             navigate('/register', {
               state: {
                 socialLoginData: {
@@ -37,11 +49,12 @@ const KakaoCallback = () => {
                   nickname: response.data.nickname,
                   profile_image: response.data.profile_image,
                   social_id: response.data.social_id,
-                  provider: 'kakao'
+                  provider: 'naver'
                 }
               }
             });
           } else {
+            // 기존 사용자는 AuthContext 상태 업데이트 후 메인 페이지로 이동
             await login(response.data.user);
             navigate('/');
           }
@@ -49,9 +62,9 @@ const KakaoCallback = () => {
           setError(response.data.message || '로그인 처리 중 오류가 발생했습니다.');
         }
       } catch (error) {
-        console.error('카카오 로그인 처리 중 오류 발생:', error);
+        console.error('네이버 로그인 처리 중 오류 발생:', error);
         if (error.response?.status === 404) {
-          setError('카카오 로그인 설정을 찾을 수 없습니다.');
+          setError('네이버 로그인 설정을 찾을 수 없습니다.');
         } else if (error.response?.data?.error === 'invalid_grant') {
           setError('인증 코드가 만료되었습니다. 다시 로그인해주세요.');
         } else if (error.response?.data?.error === 'invalid_request') {
@@ -62,7 +75,7 @@ const KakaoCallback = () => {
       }
     };
 
-    handleKakaoCallback();
+    handleNaverCallback();
   }, [navigate, location, login]);
 
   if (error) {
@@ -92,4 +105,4 @@ const KakaoCallback = () => {
   );
 };
 
-export default KakaoCallback;
+export default NaverCallback; 

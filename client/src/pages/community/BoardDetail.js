@@ -4,8 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import BoardList from './BoardList';
 import { getApiUrl } from '../../utils/api';
-import CategoryTree from '../../components/CategoryTree';
-import Comment from '../../components/Comment';
+import CategoryTree from '../../components/community/CategoryTree';
+import Comment from '../../components/community/Comment';
 
 const BoardDetail = () => {
   const { id } = useParams();

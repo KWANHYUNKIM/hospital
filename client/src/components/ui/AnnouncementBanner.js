@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import styled from 'styled-components';
-import { useAnnouncement } from '../contexts/AnnouncementContext';
+import { useAnnouncement } from '../../contexts/AnnouncementContext';
 
 const AnnouncementBanner = () => {
   const [currentIndex, setCurrentIndex] = useState(0);

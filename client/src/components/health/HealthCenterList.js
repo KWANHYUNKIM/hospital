@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSearch, FaMapMarkerAlt, FaPhone, FaClock, FaBuilding, FaHeartbeat, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import { fetchHealthCenters } from '../service/api';
+import { fetchHealthCenters, getApiUrl } from '../../service/api';
 
 const HealthCenterList = () => {
   const navigate = useNavigate();

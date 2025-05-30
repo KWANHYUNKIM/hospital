@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getNewsList } from '../service/newsApi';
+import { getNewsList } from '../../service/newsApi';
 
 export default function RecommendHotNews() {
   const [news, setNews] = useState([]);

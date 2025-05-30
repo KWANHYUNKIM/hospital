@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import RecommendPlaylist from './RecommendPlaylist';
-import RecommendChannels from './RecommendChannels';
+import RecommendPlaylist from '../recommend/RecommendPlaylist';
+import RecommendChannels from '../recommend/RecommendChannels';
 
 const hotNews = [
   {

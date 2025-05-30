@@ -1,5 +1,5 @@
 import React from 'react';
-import GuideLayout from '../../components/GuideLayout';
+import GuideLayout from '../../components/common/GuideLayout';
 
 const NightCareGuidePage = () => {
   return (
