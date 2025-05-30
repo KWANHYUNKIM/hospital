@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { api, getApiUrl } from '../utils/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { getApiUrl } from '../../utils/api';
+import { api } from '../../utils/api';
 
 const RegisterPage = () => {
   const navigate = useNavigate();

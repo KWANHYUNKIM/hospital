@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";  // 쿼리 파라미터 받기
 import { useNavigate } from "react-router-dom";
-import { fetchHospitals, fetchHospitalDetail } from "../service/api";
-import HospitalMajorList from '../components/hospital/HospitalMajorList';
-import OperatingStatus from '../components/hospital/OperatingStatus';
-import DistanceInfo from '../components/hospital/DistanceInfo';
-import NursingHospitalBanner from '../components/nursing/NursingHospitalBanner';
-import FilterDropdown from '../components/search/FilterDropdown';
+import { fetchHospitals, fetchHospitalDetail } from "../../service/api";
+import HospitalMajorList from '../../components/hospital/HospitalMajorList';
+import OperatingStatus from '../../components/hospital/OperatingStatus';
+import DistanceInfo from '../../components/hospital/DistanceInfo';
+import NursingHospitalBanner from '../../components/nursing/NursingHospitalBanner';
+import FilterDropdown from '../../components/search/FilterDropdown';
 
 const filterRegions = [
   { label: "전국", icon: "🌍" },
