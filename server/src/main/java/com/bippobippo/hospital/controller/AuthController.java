@@ -29,9 +29,15 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<MessageResponse> register(@RequestBody RegisterRequest request) {
-        authService.register(request);
-        return ResponseEntity.ok(new MessageResponse("회원가입이 완료되었습니다."));
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        try {
+            authService.register(request);
+            return ResponseEntity.status(201).body(new MessageResponse("회원가입이 완료되었습니다."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("서버 오류가 발생했습니다."));
+        }
     }
 
     @PostMapping("/login")
