@@ -55,7 +55,7 @@ public class User implements UserDetails {
     private SocialProvider socialProvider;
 
     @Column(name = "is_email_verified")
-    private Boolean isEmailVerified = false;
+    private Boolean isEmailVerified;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

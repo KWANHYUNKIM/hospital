@@ -32,7 +32,18 @@ spring:
     name: hospital
   data:
     mongodb:
-      uri: mongodb://localhost:27017/hospital
+      uri: mongodb://localhost:27017/horoscope_db
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: bippobippo119@gmail.com
+    password: bswp vdvq gbsj nszg
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 logging:
   level:
@@ -43,6 +54,8 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.springframework.data.mongodb: DEBUG
     org.mongodb.driver: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
 
 jwt:
   secret: your-secret-key-here-must-be-at-least-32-characters-long
@@ -68,4 +81,9 @@ gcs:
 
 elasticsearch:
   host: localhost
-  port: 9200 
+  port: 9200
+  url: ${ELASTICSEARCH_URL:http://localhost:9200}
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY:your-api-key-here} 

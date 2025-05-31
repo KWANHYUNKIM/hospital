@@ -3,7 +3,7 @@ import AppTour from '../../components/guide/AppTour';
 import AutoComplete from '../../components/search/AutoComplete';
 import MedicalGuideSlider from '../../components/guide/MedicalGuideSlider';
 import NursingHospitalBannerSlider from '../../components/nursing/NursingHospitalBannerSlider';
-//import BigChatModal from "../components/BigChatModal";
+import BigChatModal from "../../components/chat/BigChatModal";
 import MedicalInfoSection from '../../components/guide/MedicalInfoSection';
 //import WeatherSection from '../components/WeatherSection';
 // import NavigationBar from '../components/NavigationBar';
@@ -49,7 +49,7 @@ const MainPage = () => {
         </section>
       </main>
 
-      {/* <BigChatModal /> */}
+      { <BigChatModal />}
     </section>
   );
 };

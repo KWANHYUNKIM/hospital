@@ -33,9 +33,9 @@ const HealthCenterList = () => {
       
       const data = await fetchHealthCenters(params);
       
-      if (data && data.centers) {
-        setCenters(data.centers);
-        setTotalPages(Math.ceil(data.total / 9));
+      if (data && data.content) {
+        setCenters(data.content);
+        setTotalPages(data.totalPages);
       } else {
         setCenters([]);
         setTotalPages(1);

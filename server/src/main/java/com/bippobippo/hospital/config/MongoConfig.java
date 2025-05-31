@@ -21,7 +21,7 @@ public class MongoConfig {
 
     @Bean
     public MongoTemplate mongoTemplate() {
-        return new MongoTemplate(mongoClient(), "hospital");
+        return new MongoTemplate(mongoClient(), "horoscope_db");
     }
 
     @Bean

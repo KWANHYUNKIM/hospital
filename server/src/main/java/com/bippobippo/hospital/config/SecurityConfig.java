@@ -50,7 +50,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringAntMatchers("/api/auth/**", "/api-docs/**", "/swagger-ui/**", "/api/boards/**")
+                .ignoringAntMatchers("/api/auth/**", "/api-docs/**", "/swagger-ui/**", "/api/boards/**", "/api/email/**")
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -60,6 +60,8 @@ public class SecurityConfig {
                 .antMatchers("/api/auth/naver/**", "/api/auth/kakao/**", "/api/auth/google/**", "/api/auth/social-config/**").permitAll()
                 .antMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
                 .antMatchers("/", "/index.html", "/static/**", "/assets/**").permitAll()
+                .antMatchers("/api/hospitals/nearby").permitAll()
+                .antMatchers("/api/email/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/boards/**").authenticated()
                 .antMatchers(HttpMethod.PUT, "/api/boards/**").authenticated()

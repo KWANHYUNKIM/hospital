@@ -78,7 +78,7 @@ const AppContent = () => {
                   <Route path="/admin/news" element={<AdminRoute><NewsManagement /></AdminRoute>} />
                   <Route path="/admin/news/create" element={<AdminRoute><NewsForm /></AdminRoute>} />
                   <Route path="/admin/news/edit/:id" element={<AdminRoute><NewsForm /></AdminRoute>} />
-                  <Route path="/admin/news/categories" element={<CategoryManagement />} />                  
+                  <Route path="/admin/news/categories" element={<CategoryManagement />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/logout" element={<LogoutPage />} />
                   <Route path="/guides/emergency" element={<EmergencyGuidePage />} />

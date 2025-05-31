@@ -3,7 +3,9 @@ package com.bippobippo.hospital.service;
 import com.bippobippo.hospital.dto.request.LoginRequest;
 import com.bippobippo.hospital.dto.request.RegisterRequest;
 import com.bippobippo.hospital.entity.User;
+import com.bippobippo.hospital.entity.Role;
 import com.bippobippo.hospital.repository.UserRepository;
+import com.bippobippo.hospital.repository.RoleRepository;
 import com.bippobippo.hospital.repository.SocialConfigRepository;
 import com.bippobippo.hospital.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -31,35 +33,57 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final SocialConfigRepository socialConfigRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final RestTemplate restTemplate;
 
-    @Transactional
     public void register(RegisterRequest request) {
+        // 아이디 중복 체크
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("이미 사용 중인 아이디입니다.");
         }
+
+        // 이메일 중복 체크
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("이미 사용 중인 이메일입니다.");
         }
 
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setNickname(request.getNickname());
-        user.setInterests(request.getInterests());
-        user.setIsEmailVerified(false);
-        user.setSocialId(request.getSocialId());
-        user.setSocialProvider(request.getSocialProvider() != null ? 
-            User.SocialProvider.valueOf(request.getSocialProvider().toLowerCase()) : null);
+        // 닉네임 중복 체크
+        if (userRepository.existsByNickname(request.getNickname())) {
+            throw new RuntimeException("이미 사용 중인 닉네임입니다.");
+        }
 
+        // 비밀번호 해시화
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
+
+        // 사용자 생성
+        User user = User.builder()
+                .username(request.getUsername())
+                .password(hashedPassword)
+                .email(request.getEmail())
+                .nickname(request.getNickname())
+                .interests(request.getInterests())
+                .isEmailVerified(request.getIsEmailVerified())
+                .socialId(request.getSocialId())
+                .socialProvider(request.getSocialProvider() != null ? 
+                    User.SocialProvider.valueOf(request.getSocialProvider().toUpperCase()) : null)
+                .build();
+
+        // 사용자 저장
+        User savedUser = userRepository.save(user);
+
+        // 기본 사용자 역할 부여
+        Role userRole = roleRepository.findByRoleName("user")
+                .orElseThrow(() -> new RuntimeException("기본 역할을 찾을 수 없습니다."));
+        
+        user.getRoles().add(userRole);
         userRepository.save(user);
     }
 
