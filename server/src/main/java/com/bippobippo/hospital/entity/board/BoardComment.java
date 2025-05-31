@@ -1,6 +1,6 @@
 package com.bippobippo.hospital.entity.board;
 
-import com.bippobippo.hospital.entity.User;
+import com.bippobippo.hospital.entity.user.User;
 import javax.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

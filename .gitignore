@@ -85,3 +85,7 @@ server/src/main/resources/google-cloud-credentials.json
 *.yaml
 !**/src/main/**/application*.yml
 !**/src/main/**/application*.yaml
+
+# Application Properties
+server/src/main/resources/application.yml
+server/src/test/resources/application-test.yml

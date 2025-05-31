@@ -1,8 +1,8 @@
 package com.bippobippo.hospital.controller.search;
 
-import com.bippobippo.hospital.dto.request.HospitalSearchRequest;
-import com.bippobippo.hospital.dto.response.HospitalSearchResponse;
-import com.bippobippo.hospital.service.HospitalSearchService;
+import com.bippobippo.hospital.dto.request.hospital.HospitalSearchRequest;
+import com.bippobippo.hospital.dto.response.hospital.HospitalSearchResponse;
+import com.bippobippo.hospital.service.hospital.HospitalSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

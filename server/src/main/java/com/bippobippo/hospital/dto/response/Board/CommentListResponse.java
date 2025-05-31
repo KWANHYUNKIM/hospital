@@ -1,4 +1,4 @@
-package com.bippobippo.hospital.dto.response.Board;
+package com.bippobippo.hospital.dto.response.board;
 
 import com.bippobippo.hospital.entity.board.BoardComment;
 import lombok.Getter;

@@ -2,7 +2,7 @@ package com.bippobippo.hospital.controller.search;
 
 import com.bippobippo.hospital.dto.request.search.PharmacySearchRequest;
 import com.bippobippo.hospital.dto.response.search.PharmacySearchResponse;
-import com.bippobippo.hospital.service.PharmacySearchService;
+import com.bippobippo.hospital.service.hospital.PharmacySearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

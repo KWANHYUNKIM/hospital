@@ -1,11 +1,11 @@
 package com.bippobippo.hospital.controller.board;
 
-import com.bippobippo.hospital.dto.request.Board.BoardCreateRequest;
-import com.bippobippo.hospital.dto.request.Board.BoardUpdateRequest;
-import com.bippobippo.hospital.dto.response.Board.BoardDetailResponse;
-import com.bippobippo.hospital.dto.response.Board.BoardListResponse;
-import com.bippobippo.hospital.dto.response.Board.BoardCategoryTypeResponse;
-import com.bippobippo.hospital.dto.response.Board.RelatedBoardResponse;
+import com.bippobippo.hospital.dto.request.board.BoardCreateRequest;
+import com.bippobippo.hospital.dto.request.board.BoardUpdateRequest;
+import com.bippobippo.hospital.dto.response.board.BoardCategoryTypeResponse;
+import com.bippobippo.hospital.dto.response.board.BoardDetailResponse;
+import com.bippobippo.hospital.dto.response.board.BoardListResponse;
+import com.bippobippo.hospital.dto.response.board.RelatedBoardResponse;
 import com.bippobippo.hospital.exception.BoardNotFoundException;
 import com.bippobippo.hospital.service.board.BoardService;
 import com.bippobippo.hospital.security.CustomUserDetails;

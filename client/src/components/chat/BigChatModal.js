@@ -244,14 +244,15 @@ const BigChatModal = () => {
       }
 
       // 일반 검색
-      const response = await fetch('http://localhost:8001/api/chat/send', {
+      const response = await fetch('http://localhost:8001/api/chat/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: 'test-user',
-          message: inputMessage.trim()
+          message: inputMessage.trim(),
+          location: null,
+          coordinates: null
         }),
       });
 
