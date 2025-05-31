@@ -79,3 +79,9 @@ out/
 # Google Cloud credentials
 server/src/main/resources/google-cloud-credentials.json
 **/google-cloud-credentials.json
+
+# YAML files
+*.yml
+*.yaml
+!**/src/main/**/application*.yml
+!**/src/main/**/application*.yaml
