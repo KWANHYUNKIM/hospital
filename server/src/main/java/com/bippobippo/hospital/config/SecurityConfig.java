@@ -1,9 +1,9 @@
 package com.bippobippo.hospital.config;
 
-import com.bippobippo.hospital.entity.HospitalOrigin;
-import com.bippobippo.hospital.entity.User;
-import com.bippobippo.hospital.repository.HospitalOriginRepository;
-import com.bippobippo.hospital.repository.UserRepository;
+import com.bippobippo.hospital.entity.hospital.HospitalOrigin;
+import com.bippobippo.hospital.entity.user.User;
+import com.bippobippo.hospital.repository.hospital.HospitalOriginRepository;
+import com.bippobippo.hospital.repository.user.UserRepository;
 import com.bippobippo.hospital.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

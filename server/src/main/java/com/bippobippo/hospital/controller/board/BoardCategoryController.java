@@ -1,7 +1,7 @@
 package com.bippobippo.hospital.controller.board;
 
-import com.bippobippo.hospital.dto.request.Board.BoardCategoryRequest;
-import com.bippobippo.hospital.dto.response.Board.BoardCategoryResponse;
+import com.bippobippo.hospital.dto.request.board.BoardCategoryRequest;
+import com.bippobippo.hospital.dto.response.board.BoardCategoryResponse;
 import com.bippobippo.hospital.entity.board.BoardCategory;
 import com.bippobippo.hospital.service.board.BoardCategoryService;
 import lombok.RequiredArgsConstructor;

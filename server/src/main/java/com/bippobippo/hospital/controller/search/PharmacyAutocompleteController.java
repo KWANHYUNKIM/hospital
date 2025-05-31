@@ -2,7 +2,7 @@ package com.bippobippo.hospital.controller.search;
 
 import com.bippobippo.hospital.dto.request.search.PharmacyAutocompleteRequest;
 import com.bippobippo.hospital.dto.response.search.PharmacyAutocompleteResponse;
-import com.bippobippo.hospital.service.PharmacyAutocompleteService;
+import com.bippobippo.hospital.service.hospital.PharmacyAutocompleteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;

@@ -1,6 +1,6 @@
 package com.bippobippo.hospital.security;
 
-import com.bippobippo.hospital.entity.User;
+import com.bippobippo.hospital.entity.user.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -1,4 +1,4 @@
-package com.bippobippo.hospital.dto.request.Board;
+package com.bippobippo.hospital.dto.request.board;
 
 import lombok.Getter;
 import lombok.Setter;
