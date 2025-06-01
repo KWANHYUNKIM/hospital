@@ -4,6 +4,9 @@ import com.bippobippo.hospital.entity.board.BoardCategory;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @NoArgsConstructor
@@ -31,22 +34,34 @@ public class BoardCategoryResponse {
     private String config;
     @JsonProperty("has_children")
     private Boolean hasChildren;
+    private List<BoardCategoryResponse> children;
 
     public static BoardCategoryResponse from(BoardCategory category) {
+        if (category == null) {
+            return null;
+        }
+
         BoardCategoryResponse response = new BoardCategoryResponse();
         response.id = category.getId();
         response.name = category.getName();
         response.description = category.getDescription();
+        response.categoryTypeId = category.getCategoryType() != null ? category.getCategoryType().getId() : null;
         response.parentId = category.getParent() != null ? category.getParent().getId() : null;
-        response.categoryTypeId = category.getCategoryType().getId();
-        response.typeName = category.getCategoryType().getTypeName();
-        response.typeCode = category.getCategoryType().getTypeCode();
         response.orderSequence = category.getOrderSequence();
         response.allowComments = category.getAllowComments();
         response.isSecretDefault = category.getIsSecretDefault();
         response.isActive = category.getIsActive();
         response.config = category.getConfig();
-        response.hasChildren = !category.getChildren().isEmpty();
+        
+        // children 컬렉션을 안전하게 처리
+        try {
+            response.children = category.getChildren().stream()
+                .map(BoardCategoryResponse::from)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            response.children = Collections.emptyList();
+        }
+
         return response;
     }
 } 

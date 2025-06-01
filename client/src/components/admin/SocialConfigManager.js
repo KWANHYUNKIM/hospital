@@ -27,11 +27,11 @@ const SocialConfigManager = () => {
   const [selectedConfig, setSelectedConfig] = useState(null);
   const [formData, setFormData] = useState({
     provider: '',
-    client_id: '',
-    client_secret: '',
-    redirect_uri: '',
-    environment: 'development',
-    is_active: true
+    clientId: '',
+    clientSecret: '',
+    redirectUri: '',
+    environment: 'production',
+    isActive: true
   });
 
   useEffect(() => {
@@ -41,60 +41,122 @@ const SocialConfigManager = () => {
   const fetchConfigs = async () => {
     try {
       const response = await api.get('/api/admin/social-configs');
-      setConfigs(response.data);
+      setConfigs(response.data.configs || []);
     } catch (error) {
       setMessage({ type: 'error', text: '설정을 불러오는데 실패했습니다.' });
+      setConfigs([]);
     }
   };
 
   const handleEdit = (config) => {
+    console.log('Editing config:', config);
+    if (!config || !config.provider) {
+      setMessage({ type: 'error', text: '유효하지 않은 설정입니다.' });
+      return;
+    }
     setSelectedConfig(config);
-    setFormData(config);
+    setFormData({
+      provider: config.provider,
+      clientId: config.clientId || '',
+      clientSecret: config.clientSecret || '',
+      redirectUri: config.redirectUri || '',
+      environment: config.environment || 'production',
+      isActive: config.isActive ?? true
+    });
     setEditDialogOpen(true);
   };
 
   const handleDelete = (config) => {
+    console.log('Deleting config:', config);
+    if (!config || !config.provider) {
+      setMessage({ type: 'error', text: '유효하지 않은 설정입니다.' });
+      return;
+    }
     setSelectedConfig(config);
     setDeleteDialogOpen(true);
   };
 
   const handleSubmit = async () => {
     try {
+      console.log('Submitting form data:', formData);
+      
+      // provider 값 검증
+      if (!formData.provider) {
+        throw new Error('제공자(provider)를 입력해주세요.');
+      }
+
+      // provider 값 형식 검증 (소문자, 숫자, 하이픈만 허용)
+      if (!/^[a-z0-9-]+$/.test(formData.provider)) {
+        throw new Error('제공자(provider)는 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.');
+      }
+
+      const submitData = {
+        provider: formData.provider.toLowerCase(), // 소문자로 변환
+        clientId: formData.clientId,
+        clientSecret: formData.clientSecret,
+        redirectUri: formData.redirectUri,
+        environment: formData.environment,
+        isActive: formData.isActive
+      };
+
       if (selectedConfig) {
         await api.put(
           `/api/admin/social-configs/${selectedConfig.provider}`,
-          formData
+          submitData
         );
         setMessage({ type: 'success', text: '설정이 수정되었습니다.' });
       } else {
         await api.post(
           '/api/admin/social-configs',
-          formData
+          submitData
         );
         setMessage({ type: 'success', text: '설정이 추가되었습니다.' });
       }
       setEditDialogOpen(false);
       fetchConfigs();
     } catch (error) {
-      setMessage({ type: 'error', text: '설정 저장에 실패했습니다.' });
+      console.error('Submit error:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error.message || '설정 저장에 실패했습니다.' 
+      });
     }
   };
 
   const handleConfirmDelete = async () => {
     try {
-      await api.delete(
+      console.log('Selected config for deletion:', selectedConfig);
+      const response = await api.delete(
         `/api/admin/social-configs/${selectedConfig.provider}`
       );
-      setMessage({ type: 'success', text: '설정이 삭제되었습니다.' });
-      setDeleteDialogOpen(false);
-      fetchConfigs();
+      
+      if (response.data) {
+        setMessage({ type: 'success', text: '설정이 삭제되었습니다.' });
+        setDeleteDialogOpen(false);
+        fetchConfigs();
+      }
     } catch (error) {
-      setMessage({ type: 'error', text: '설정 삭제에 실패했습니다.' });
+      console.error('Delete error:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || error.message || '설정 삭제에 실패했습니다.' 
+      });
     }
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    console.log(`Changing ${field} to:`, value);
+    
+    // provider 필드인 경우 소문자로 변환
+    if (field === 'provider') {
+      value = value.toLowerCase();
+    }
+    
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      console.log('New form data:', newData);
+      return newData;
+    });
   };
 
   return (
@@ -108,11 +170,11 @@ const SocialConfigManager = () => {
             setSelectedConfig(null);
             setFormData({
               provider: '',
-              client_id: '',
-              client_secret: '',
-              redirect_uri: '',
-              environment: 'development',
-              is_active: true
+              clientId: '',
+              clientSecret: '',
+              redirectUri: '',
+              environment: 'production',
+              isActive: true
             });
             setEditDialogOpen(true);
           }}
@@ -147,10 +209,10 @@ const SocialConfigManager = () => {
                 </Box>
 
                 <Typography variant="body2" color="textSecondary">
-                  Client ID: {config.client_id}
+                  Client ID: {config.clientId}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  Redirect URI: {config.redirect_uri}
+                  Redirect URI: {config.redirectUri}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                   환경: {config.environment}
@@ -158,7 +220,7 @@ const SocialConfigManager = () => {
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={config.is_active}
+                      checked={config.isActive}
                       disabled
                     />
                   }
@@ -183,34 +245,36 @@ const SocialConfigManager = () => {
             onChange={(e) => handleChange('provider', e.target.value)}
             margin="normal"
             disabled={!!selectedConfig}
+            helperText="영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다."
+            error={formData.provider && !/^[a-z0-9-]+$/.test(formData.provider)}
           />
           <TextField
             fullWidth
             label="Client ID"
-            value={formData.client_id}
-            onChange={(e) => handleChange('client_id', e.target.value)}
+            value={formData.clientId}
+            onChange={(e) => handleChange('clientId', e.target.value)}
             margin="normal"
           />
           <TextField
             fullWidth
             label="Client Secret"
-            value={formData.client_secret}
-            onChange={(e) => handleChange('client_secret', e.target.value)}
+            value={formData.clientSecret}
+            onChange={(e) => handleChange('clientSecret', e.target.value)}
             margin="normal"
             type="password"
           />
           <TextField
             fullWidth
             label="Redirect URI"
-            value={formData.redirect_uri}
-            onChange={(e) => handleChange('redirect_uri', e.target.value)}
+            value={formData.redirectUri}
+            onChange={(e) => handleChange('redirectUri', e.target.value)}
             margin="normal"
           />
           <FormControlLabel
             control={
               <Switch
-                checked={formData.is_active}
-                onChange={(e) => handleChange('is_active', e.target.checked)}
+                checked={formData.isActive}
+                onChange={(e) => handleChange('isActive', e.target.checked)}
               />
             }
             label="활성화"
@@ -228,13 +292,24 @@ const SocialConfigManager = () => {
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>설정 삭제 확인</DialogTitle>
         <DialogContent>
-          <Typography>
-            정말로 {selectedConfig?.provider.toUpperCase()} 설정을 삭제하시겠습니까?
-          </Typography>
+          {selectedConfig?.provider ? (
+            <Typography>
+              정말로 {selectedConfig.provider.toUpperCase()} 설정을 삭제하시겠습니까?
+            </Typography>
+          ) : (
+            <Typography color="error">
+              유효하지 않은 설정입니다.
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>취소</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
+          <Button 
+            onClick={handleConfirmDelete} 
+            color="error" 
+            variant="contained"
+            disabled={!selectedConfig?.provider}
+          >
             삭제
           </Button>
         </DialogActions>

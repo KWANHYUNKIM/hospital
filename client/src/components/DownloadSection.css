@@ -1,0 +1,206 @@
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* DownloadSection.css                                                            */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/* 전체 섹션 스타일 */
+.download-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #f3f9ff 0%, #e3f2ff 100%);
+    border-radius: 1rem;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.05);
+    gap: 2rem;
+    margin: 2rem auto;
+    max-width: 1200px;
+  }
+  
+  /* ─────────────────────────────────────────────────────────────────────────── */
+  /* 왼쪽 정보 영역 (텍스트 + 버튼)                                              */
+  /* ─────────────────────────────────────────────────────────────────────────── */
+  
+  .download-section__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  /* 제목 스타일 */
+  .download-section__title {
+    font-size: 2.5rem;
+    line-height: 1.2;
+    font-weight: 700;
+    margin: 0 0 1.5rem 0;
+    color: #1a2638;
+    text-shadow: 1px 1px 6px rgba(26, 38, 56, 0.1);
+  }
+  
+  .download-section__highlight {
+    display: inline-block;
+    background: linear-gradient(90deg, #0d99ff, #73cff8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-top: 0.5rem;
+  }
+  
+  /* 설명(문단) 스타일 */
+  .download-section__desc {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: #475269;
+    margin-bottom: 2rem;
+  }
+  
+  /* 버튼 스타일 */
+  .download-section__btn {
+    display: inline-flex;
+    align-items: center;
+    background-color: #ffffff;
+    color: #0d99ff;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    text-decoration: none;
+    box-shadow: 0px 6px 20px rgba(13, 153, 255, 0.15);
+    transition: all 0.3s ease;
+  }
+  
+  .download-section__btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 8px 24px rgba(13, 153, 255, 0.25);
+  }
+  
+  .download-section__btn-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+  }
+  
+  .download-section__btn-text {
+    display: flex;
+    align-items: center;
+  }
+  
+  .download-section__btn-detail {
+    color: #73cff8;
+    font-weight: 700;
+    margin-left: 0.25rem;
+  }
+  
+  .download-section__btn-arrow {
+    font-size: 1.25rem;
+    margin-left: 0.75rem;
+    transition: margin-left 0.3s ease;
+  }
+  
+  .download-section__btn:hover .download-section__btn-arrow {
+    margin-left: 1rem;
+  }
+  
+  /* ─────────────────────────────────────────────────────────────────────────── */
+  /* 오른쪽 비주얼 영역 (MotionGraphic + 이미지 공간)                             */
+  /* ─────────────────────────────────────────────────────────────────────────── */
+  
+  .download-section__visual {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    position: relative;
+  }
+  
+  /* 모션그래픽 래퍼 */
+  .download-section__motion {
+    flex-shrink: 0;
+  }
+  
+  /* 이미지 플레이스홀더 (필요 시 <img> 삽입) */
+  .download-section__image-placeholder {
+    width: 300px;
+    height: 300px;
+    background-color: #ffffff;
+    border: 2px dashed rgba(26, 38, 56, 0.1);
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  
+  .download-section__image-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* ─────────────────────────────────────────────────────────────────────────── */
+  /* 반응형(Mobile)                                                           */
+  /* ─────────────────────────────────────────────────────────────────────────── */
+  
+  @media (max-width: 900px) {
+    .download-section {
+      flex-direction: column-reverse;
+      padding: 3rem 1.5rem;
+    }
+  
+    .download-section__info {
+      text-align: center;
+      margin-top: 2rem;
+    }
+  
+    .download-section__title {
+      font-size: 2rem;
+    }
+  
+    .download-section__highlight {
+      font-size: 2.5rem;
+    }
+  
+    .download-section__desc {
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+  
+    .download-section__visual {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  
+    .download-section__image-placeholder {
+      width: 80%;
+      height: 200px;
+    }
+  }
+  
+  @media (max-width: 500px) {
+    .download-section__title {
+      font-size: 1.75rem;
+    }
+  
+    .download-section__highlight {
+      font-size: 2rem;
+    }
+  
+    .download-section__desc {
+      font-size: 0.95rem;
+    }
+  
+    .download-section__btn {
+      padding: 0.65rem 1.25rem;
+      font-size: 0.95rem;
+    }
+  
+    .download-section__btn-icon {
+      font-size: 1.25rem;
+    }
+  
+    .download-section__btn-arrow {
+      font-size: 1rem;
+    }
+  }

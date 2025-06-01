@@ -6,7 +6,7 @@ import com.bippobippo.hospital.entity.user.User;
 import com.bippobippo.hospital.entity.user.Role;
 import com.bippobippo.hospital.repository.user.UserRepository;
 import com.bippobippo.hospital.repository.user.RoleRepository;
-import com.bippobippo.hospital.repository.user.SocialConfigRepository;
+import com.bippobippo.hospital.repository.common.SocialConfigRepository;
 import com.bippobippo.hospital.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,7 +80,7 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         // 기본 사용자 역할 부여
-        Role userRole = roleRepository.findByRoleName("user")
+        Role userRole = roleRepository.findByRoleName("USER")
                 .orElseThrow(() -> new RuntimeException("기본 역할을 찾을 수 없습니다."));
         
         user.getRoles().add(userRole);

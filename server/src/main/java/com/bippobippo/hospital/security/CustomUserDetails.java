@@ -22,7 +22,13 @@ public class CustomUserDetails implements UserDetails {
         this.username = user.getUsername();
         this.password = user.getPassword();
         this.authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getRoleName()))
+                .map(role -> {
+                    String roleName = role.getRoleName();
+                    // 이미 ROLE_ 접두사가 있는 경우 그대로 사용, 없는 경우 추가
+                    return new SimpleGrantedAuthority(
+                        roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName
+                    );
+                })
                 .collect(Collectors.toList());
     }
 

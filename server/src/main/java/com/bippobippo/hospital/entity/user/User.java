@@ -78,7 +78,12 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()
-            .map(role -> new SimpleGrantedAuthority(role.getRoleName()))
+            .map(role -> {
+                String roleName = role.getRoleName();
+                return new SimpleGrantedAuthority(
+                    roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName
+                );
+            })
             .collect(Collectors.toSet());
     }
 

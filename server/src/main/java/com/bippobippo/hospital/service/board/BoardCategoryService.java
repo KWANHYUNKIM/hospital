@@ -7,6 +7,7 @@ import com.bippobippo.hospital.entity.board.BoardCategoryType;
 import com.bippobippo.hospital.repository.board.BoardCategoryRepository;
 import com.bippobippo.hospital.repository.board.BoardCategoryTypeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BoardCategoryService {
@@ -46,48 +48,110 @@ public class BoardCategoryService {
 
     @Transactional
     public BoardCategory createCategory(BoardCategoryRequest request) {
-        BoardCategoryType categoryType = categoryTypeRepository.findById(request.getTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("Category type not found"));
+        log.info("카테고리 생성 시작 - 요청 데이터: {}", request);
+        try {
+            BoardCategoryType categoryType = categoryTypeRepository.findById(request.getTypeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Category type not found"));
 
-        BoardCategory parent = null;
-        if (request.getParentId() != null) {
-            parent = categoryRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Parent category not found"));
+            BoardCategory parent = null;
+            if (request.getParentId() != null) {
+                parent = categoryRepository.findById(request.getParentId())
+                        .orElseThrow(() -> new IllegalArgumentException("Parent category not found"));
+            }
+
+            BoardCategory category = new BoardCategory();
+            category.setName(request.getName());
+            category.setDescription(request.getDescription());
+            category.setCategoryType(categoryType);
+            category.setParent(parent);
+            category.setOrderSequence(request.getOrderSequence());
+            category.setAllowComments(request.isAllowComments());
+            category.setIsSecretDefault(request.isSecretDefault());
+            category.setIsActive(request.isActive());
+            category.setConfig(request.getConfig());
+            
+            String path = generatePath(category);
+            category.setPath(path);
+            log.info("생성된 카테고리 path: {}", path);
+
+            BoardCategory savedCategory = categoryRepository.save(category);
+            log.info("카테고리 생성 완료 - ID: {}", savedCategory.getId());
+            return savedCategory;
+        } catch (Exception e) {
+            log.error("카테고리 생성 실패: {}", e.getMessage(), e);
+            throw e;
         }
-
-        BoardCategory category = new BoardCategory();
-        category.setName(request.getName());
-        category.setDescription(request.getDescription());
-        category.setCategoryType(categoryType);
-        category.setParent(parent);
-        category.setOrderSequence(request.getOrderSequence());
-        category.setAllowComments(request.getAllowComments());
-        category.setIsSecretDefault(request.getIsSecretDefault());
-        category.setIsActive(request.getIsActive());
-        category.setConfig(request.getConfig());
-
-        return categoryRepository.save(category);
     }
 
     @Transactional
-    public void updateCategory(Integer id, BoardCategoryRequest request) {
+    public BoardCategory updateCategory(Integer id, BoardCategoryRequest request) {
         BoardCategory category = categoryRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + id));
 
-        category.setName(request.getName());
-        category.setDescription(request.getDescription());
+        // 카테고리 타입 업데이트
+        if (request.getTypeId() != null) {
+            BoardCategoryType type = categoryTypeRepository.findById(request.getTypeId())
+                    .orElseThrow(() -> new RuntimeException("카테고리 타입을 찾을 수 없습니다: " + request.getTypeId()));
+            category.setCategoryType(type);
+        }
+
+        // 부모 카테고리 업데이트
         if (request.getParentId() != null) {
+            if (request.getParentId().equals(id)) {
+                throw new IllegalArgumentException("자기 자신을 부모 카테고리로 지정할 수 없습니다.");
+            }
             BoardCategory parent = categoryRepository.findById(request.getParentId())
-                .orElseThrow(() -> new RuntimeException("부모 카테고리를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new RuntimeException("부모 카테고리를 찾을 수 없습니다: " + request.getParentId()));
+            
+            if (isCircularReference(id, parent.getId())) {
+                throw new IllegalArgumentException("순환 참조가 발생할 수 없습니다.");
+            }
             category.setParent(parent);
         } else {
             category.setParent(null);
         }
+
+        // 기본 정보 업데이트
+        category.setName(request.getName());
+        category.setDescription(request.getDescription());
         category.setOrderSequence(request.getOrderSequence());
-        category.setAllowComments(request.getAllowComments());
-        category.setIsSecretDefault(request.getIsSecretDefault());
-        category.setIsActive(request.getIsActive());
+        category.setAllowComments(request.isAllowComments());
+        category.setIsSecretDefault(request.isSecretDefault());
+        category.setIsActive(request.isActive());
         category.setConfig(request.getConfig());
+
+        // path 업데이트
+        category.setPath(generatePath(category));
+
+        // children 컬렉션 초기화
+        category.getChildren().size();
+
+        return categoryRepository.save(category);
+    }
+
+    private String generatePath(BoardCategory category) {
+        StringBuilder path = new StringBuilder();
+        path.append(category.getName());
+        
+        BoardCategory parent = category.getParent();
+        while (parent != null) {
+            path.insert(0, parent.getName() + "/");
+            parent = parent.getParent();
+        }
+        
+        return path.toString();
+    }
+
+    private boolean isCircularReference(Integer categoryId, Integer parentId) {
+        BoardCategory current = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+        while (current != null) {
+            if (current.getId().equals(parentId)) {
+                return true;
+            }
+            current = current.getParent();
+        }
+        return false;
     }
 
     @Transactional

@@ -1,18 +1,16 @@
 package com.bippobippo.hospital.dto.request.board;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class BoardCategoryRequest {
     private String name;
     private String description;
     private Integer typeId;
     private Integer parentId;
     private Integer orderSequence;
-    private Boolean allowComments = true;
-    private Boolean isSecretDefault = false;
-    private Boolean isActive = true;
+    private boolean allowComments = true;
+    private boolean secretDefault = false;
+    private boolean active = true;
     private String config;
 } 

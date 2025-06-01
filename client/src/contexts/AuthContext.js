@@ -40,12 +40,15 @@ export const AuthProvider = ({ children }) => {
           withCredentials: true,
           headers: { 'x-csrf-token': csrfToken }
         });
+        console.log('서버 응답 데이터:', response.data);
         if (response.data && response.data.user) {
+          console.log('사용자 데이터:', response.data.user);
           updateAuthState(response.data.user);
         } else {
           updateAuthState(null);
         }
       } catch (error) {
+        console.error('인증 체크 에러:', error);
         updateAuthState(null);
       } finally {
         setIsLoading(false);
