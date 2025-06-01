@@ -10,9 +10,7 @@ import PharmaciesList from "./pages/hospital/PharmaciesList";
 import Footer from './components/common/Footer';
 import AdSense from './components/ui/AdSense';
 import LoginPage from "./pages/auth/LoginPage";
-import LogoutPage from "./pages/auth/LogoutPage";
 import AdminRoute from "./components/AdminRoute";
-import HospitalManagementPage from './pages/hospital/HospitalManagementPage';
 import EmergencyGuidePage from './pages/guides/EmergencyGuidePage';
 import NightCareGuidePage from './pages/guides/NightCareGuidePage';
 import WeekendCareGuidePage from './pages/guides/WeekendCareGuidePage';
@@ -71,7 +69,6 @@ const AppContent = () => {
                   <Route path="/nursing-hospitals/:id/reviews" element={<NursingHospitalReviewPage />} />
                   <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                   <Route path="/admin/dashboard" element={<AdminRoute><DashboardPage /></AdminRoute>} />
-                  <Route path="/admin/hospitals" element={<AdminRoute><HospitalManagementPage /></AdminRoute>} />
                   <Route path="/admin/categories" element={<AdminRoute><CategoryManagementPage /></AdminRoute>} />
                   <Route path="/admin/category-types" element={<AdminRoute><CategoryTypeManagementPage /></AdminRoute>} />
                   <Route path="/admin/announcements" element={<AdminRoute><AnnouncementManagementPage /></AdminRoute>} />
@@ -80,7 +77,6 @@ const AppContent = () => {
                   <Route path="/admin/news/edit/:id" element={<AdminRoute><NewsForm /></AdminRoute>} />
                   <Route path="/admin/news/categories" element={<CategoryManagement />} />
                   <Route path="/login" element={<LoginPage />} />
-                  <Route path="/logout" element={<LogoutPage />} />
                   <Route path="/guides/emergency" element={<EmergencyGuidePage />} />
                   <Route path="/guides/night-care" element={<NightCareGuidePage />} />
                   <Route path="/guides/weekend-care" element={<WeekendCareGuidePage />} />

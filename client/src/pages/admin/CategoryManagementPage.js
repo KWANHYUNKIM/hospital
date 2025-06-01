@@ -114,16 +114,28 @@ const CategoryManagementPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const requestData = {
+        name: formData.category_name,
+        description: formData.description,
+        typeId: formData.category_type_id,
+        parentId: formData.parent_id || null,
+        orderSequence: formData.order_sequence,
+        allowComments: true,
+        isSecretDefault: false,
+        isActive: true,
+        config: null
+      };
+
       if (editingCategory) {
         await axios.put(
           `${getApiUrl()}/api/boards/categories/${editingCategory.id}`,
-          formData,
+          requestData,
           { withCredentials: true }
         );
       } else {
         await axios.post(
           `${getApiUrl()}/api/boards/categories`,
-          formData,
+          requestData,
           { withCredentials: true }
         );
       }

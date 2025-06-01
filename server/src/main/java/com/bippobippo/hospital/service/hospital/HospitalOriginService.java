@@ -55,6 +55,7 @@ public class HospitalOriginService {
         existingOrigin.setOriginUrl(origin.getOriginUrl());
         existingOrigin.setEnvironment(origin.getEnvironment());
         existingOrigin.setDescription(origin.getDescription());
+        existingOrigin.setIsActive(origin.getIsActive());
         existingOrigin.setUpdatedBy(userId);
         
         HospitalOrigin updatedOrigin = originRepository.save(existingOrigin);
@@ -90,5 +91,25 @@ public class HospitalOriginService {
         history.setNewValue(updatedOrigin.toString());
         history.setChangedBy(userId);
         historyRepository.save(history);
+    }
+
+    @Transactional
+    public void delete(Integer id, Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
+        HospitalOrigin origin = originRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Origin을 찾을 수 없습니다."));
+
+        String previousValue = origin.toString();
+        
+        HospitalOriginHistory history = new HospitalOriginHistory();
+        history.setOriginId(origin.getId());
+        history.setAction("DELETE");
+        history.setPreviousValue(previousValue);
+        history.setChangedBy(userId);
+        historyRepository.save(history);
+
+        originRepository.delete(origin);
     }
 } 

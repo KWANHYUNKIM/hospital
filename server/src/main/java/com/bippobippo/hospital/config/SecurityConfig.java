@@ -48,26 +48,25 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringAntMatchers("/api/auth/**", "/api-docs/**", "/swagger-ui/**", "/api/boards/**", "/api/email/**")
-            )
+            .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                .antMatchers("/api/auth/login", "/api/auth/register").permitAll()
-                .antMatchers("/api/auth/naver/**", "/api/auth/kakao/**", "/api/auth/google/**", "/api/auth/social-config/**").permitAll()
-                .antMatchers("/api-docs/**", "/swagger-ui/**").permitAll()
-                .antMatchers("/", "/index.html", "/static/**", "/assets/**").permitAll()
-                .antMatchers("/api/hospitals/nearby").permitAll()
-                .antMatchers("/api/email/**").permitAll()
-                .antMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/boards/**").authenticated()
-                .antMatchers(HttpMethod.PUT, "/api/boards/**").authenticated()
-                .antMatchers(HttpMethod.DELETE, "/api/boards/**").authenticated()
-                .antMatchers("/api/**").permitAll()
-                .anyRequest().permitAll()
+            // 관리자 전용 API
+            .antMatchers("/api/auth/**").permitAll()
+
+            .antMatchers("/api/admin/**").hasRole("ADMIN")
+
+            // 게시판 API
+            .antMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
+            .antMatchers("/api/boards/**").authenticated() // POST, PUT, DELETE 포함
+
+            // 기타 모든 API의 GET 요청 허용
+            .antMatchers(HttpMethod.GET, "/api/**").permitAll()
+
+            // 나머지는 인증 필요
+            .anyRequest().authenticated()
             )
             .logout(logout -> logout
                 .logoutUrl("/api/auth/logout")
@@ -78,7 +77,6 @@ public class SecurityConfig {
                 .permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
@@ -87,7 +85,6 @@ public class SecurityConfig {
         return username -> {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
-
             return new CustomUserDetails(user);
         };
     }
@@ -114,7 +111,23 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:8081", "http://localhost:3002"));
+        // 데이터베이스에서 활성화된 출처 목록 가져오기
+        List<String> allowedOrigins = originRepository.findAll().stream()
+            .filter(HospitalOrigin::getIsActive)
+            .map(HospitalOrigin::getOriginUrl)
+            .collect(Collectors.toList());
+        
+        // 개발 환경의 localhost 출처 추가
+        String activeProfile = System.getProperty("spring.profiles.active", "dev");
+        if ("dev".equals(activeProfile)) {
+            allowedOrigins.addAll(Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:8081",
+                "http://localhost:3002"
+            ));
+        }
+        
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList(
             "Authorization",

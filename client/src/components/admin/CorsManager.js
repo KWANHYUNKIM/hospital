@@ -14,9 +14,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
   MenuItem,
   IconButton,
   Typography,
@@ -32,12 +29,12 @@ const CorsManager = () => {
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
   const [editingOrigin, setEditingOrigin] = useState(null);
   const [formData, setFormData] = useState({
-    origin_url: '',
+    originUrl: '',
     environment: 'development',
-    is_active: true,
+    isActive: true,
     description: '',
-    created_by: null,
-    updated_by: null
+    createdBy: null,
+    updatedBy: null
   });
 
   const fetchOrigins = async () => {
@@ -61,12 +58,12 @@ const CorsManager = () => {
     } else {
       setEditingOrigin(null);
       setFormData({
-        origin_url: '',
+        originUrl: '',
         environment: 'development',
-        is_active: true,
+        isActive: true,
         description: '',
-        created_by: null,
-        updated_by: null
+        createdBy: null,
+        updatedBy: null
       });
     }
     setOpen(true);
@@ -76,12 +73,12 @@ const CorsManager = () => {
     setOpen(false);
     setEditingOrigin(null);
     setFormData({
-      origin_url: '',
+      originUrl: '',
       environment: 'development',
-      is_active: true,
+      isActive: true,
       description: '',
-      created_by: null,
-      updated_by: null
+      createdBy: null,
+      updatedBy: null
     });
   };
 
@@ -90,28 +87,28 @@ const CorsManager = () => {
     setDeleteDialogOpen(true);
   };
 
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/api/origins/${editingOrigin.id}/delete`);
+      fetchOrigins();
+      setDeleteDialogOpen(false);
+      alert('Origin이 삭제되었습니다.');
+    } catch (error) {
+      console.error('Origin 삭제 실패:', error);
+      alert('Origin 삭제에 실패했습니다.');
+    }
+  };
+
   const handleActivate = async (id) => {
     setEditingOrigin(origins.find(origin => origin.id === id));
     setActivateDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    try {
-      await api.delete(`/api/origins/${editingOrigin.id}`);
-      fetchOrigins();
-      setDeleteDialogOpen(false);
-      alert('Origin이 비활성화되었습니다.');
-    } catch (error) {
-      console.error('Origin 비활성화 실패:', error);
-      alert('Origin 비활성화에 실패했습니다.');
-    }
   };
 
   const confirmActivate = async () => {
     try {
       await api.put(`/api/origins/${editingOrigin.id}`, {
         ...editingOrigin,
-        is_active: true
+        isActive: true
       });
       fetchOrigins();
       setActivateDialogOpen(false);
@@ -126,9 +123,9 @@ const CorsManager = () => {
     e.preventDefault();
     try {
       const submitData = {
-        origin_url: formData.origin_url,
+        originUrl: formData.originUrl,
         environment: formData.environment,
-        is_active: formData.is_active ? 1 : 0,
+        isActive: formData.isActive === 1 || formData.isActive === true,
         description: formData.description
       };
 
@@ -155,6 +152,19 @@ const CorsManager = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleDeactivate = async (id) => {
+    if (window.confirm('이 Origin을 비활성화하시겠습니까?')) {
+      try {
+        await api.delete(`/api/origins/${id}`);
+        fetchOrigins();
+        alert('Origin이 비활성화되었습니다.');
+      } catch (error) {
+        console.error('Origin 비활성화 실패:', error);
+        alert('Origin 비활성화에 실패했습니다.');
+      }
+    }
   };
 
   return (
@@ -187,12 +197,12 @@ const CorsManager = () => {
           <TableBody>
             {origins.map((origin) => (
               <TableRow key={origin.id}>
-                <TableCell>{origin.origin_url}</TableCell>
+                <TableCell>{origin.originUrl}</TableCell>
                 <TableCell>{origin.environment}</TableCell>
-                <TableCell>{origin.is_active ? '활성' : '비활성'}</TableCell>
+                <TableCell>{origin.isActive ? '활성' : '비활성'}</TableCell>
                 <TableCell>{origin.description}</TableCell>
-                <TableCell>{new Date(origin.created_at).toLocaleString()}</TableCell>
-                <TableCell>{new Date(origin.updated_at).toLocaleString()}</TableCell>
+                <TableCell>{new Date(origin.createdAt).toLocaleString()}</TableCell>
+                <TableCell>{new Date(origin.updatedAt).toLocaleString()}</TableCell>
                 <TableCell>
                   <IconButton
                     size="small"
@@ -201,11 +211,18 @@ const CorsManager = () => {
                   >
                     <EditIcon />
                   </IconButton>
-                  {origin.is_active ? (
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDelete(origin.id)}
+                    color="error"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                  {origin.isActive ? (
                     <IconButton
                       size="small"
-                      onClick={() => handleDelete(origin.id)}
-                      color="error"
+                      onClick={() => handleDeactivate(origin.id)}
+                      color="warning"
                     >
                       <BlockIcon />
                     </IconButton>
@@ -234,8 +251,8 @@ const CorsManager = () => {
             <TextField
               fullWidth
               label="Origin URL"
-              value={formData.origin_url}
-              onChange={(e) => setFormData({ ...formData, origin_url: e.target.value })}
+              value={formData.originUrl}
+              onChange={(e) => setFormData({ ...formData, originUrl: e.target.value })}
               margin="normal"
               required
             />
@@ -256,8 +273,8 @@ const CorsManager = () => {
               fullWidth
               select
               label="상태"
-              value={formData.is_active ? 1 : 0}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 1 })}
+              value={formData.isActive ? 1 : 0}
+              onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 1 })}
               margin="normal"
               required
             >
@@ -282,16 +299,16 @@ const CorsManager = () => {
       </Dialog>
 
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Origin 비활성화</DialogTitle>
+        <DialogTitle>Origin 삭제</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            이 Origin을 비활성화하시겠습니까? 비활성화된 Origin은 CORS 설정에서 제외됩니다.
+            정말로 이 Origin을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>취소</Button>
           <Button onClick={confirmDelete} color="error" autoFocus>
-            비활성화
+            삭제
           </Button>
         </DialogActions>
       </Dialog>

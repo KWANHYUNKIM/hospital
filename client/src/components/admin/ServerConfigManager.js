@@ -30,11 +30,11 @@ const ServerConfigManager = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState(null);
   const [formData, setFormData] = useState({
-    key_name: '',
+    keyName: '',
     value: '',
     environment: 'development',
     description: '',
-    is_active: true
+    isActive: true
   });
 
   useEffect(() => {
@@ -44,20 +44,21 @@ const ServerConfigManager = () => {
   const fetchConfigs = async () => {
     try {
       const response = await api.get('/api/admin/server-configs');
-      setConfigs(response.data);
+      setConfigs(Array.isArray(response.data.configs) ? response.data.configs : []);
     } catch (error) {
       setMessage({ type: 'error', text: '서버 설정을 불러오는데 실패했습니다.' });
+      setConfigs([]);
     }
   };
 
   const handleEdit = (config) => {
     setSelectedConfig(config);
     setFormData({
-      key_name: config.key_name,
+      keyName: config.keyName,
       value: config.value,
       environment: config.environment,
       description: config.description,
-      is_active: config.is_active
+      isActive: config.isActive
     });
     setEditDialogOpen(true);
   };
@@ -122,7 +123,7 @@ const ServerConfigManager = () => {
                   <CardContent>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Box>
-                        <Typography variant="subtitle1">{config.key_name}</Typography>
+                        <Typography variant="subtitle1">{config.keyName}</Typography>
                         <Typography variant="body2" color="textSecondary">
                           환경: {config.environment}
                         </Typography>
@@ -133,12 +134,12 @@ const ServerConfigManager = () => {
                         <FormControlLabel
                           control={
                             <Switch
-                              checked={config.is_active}
-                              onChange={() => handleChange('is_active', !config.is_active)}
+                              checked={config.isActive}
+                              onChange={() => handleChange('isActive', !config.isActive)}
                               onClick={(e) => e.stopPropagation()}
                             />
                           }
-                          label={config.is_active ? "활성" : "비활성"}
+                          label={config.isActive ? "활성" : "비활성"}
                         />
                       </Box>
                       <Box>
@@ -165,8 +166,8 @@ const ServerConfigManager = () => {
                 <TextField
                   fullWidth
                   label="설정 이름"
-                  value={formData.key_name}
-                  onChange={(e) => handleChange('key_name', e.target.value)}
+                  value={formData.keyName}
+                  onChange={(e) => handleChange('keyName', e.target.value)}
                   margin="normal"
                   required
                 />
@@ -202,11 +203,11 @@ const ServerConfigManager = () => {
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={formData.is_active}
-                      onChange={(e) => handleChange('is_active', e.target.checked)}
+                      checked={formData.isActive}
+                      onChange={(e) => handleChange('isActive', e.target.checked)}
                     />
                   }
-                  label={formData.is_active ? "활성" : "비활성"}
+                  label={formData.isActive ? "활성" : "비활성"}
                 />
               </Box>
             </DialogContent>
@@ -222,7 +223,7 @@ const ServerConfigManager = () => {
             <DialogTitle>서버 설정 삭제</DialogTitle>
             <DialogContent>
               <Typography>
-                정말로 "{selectedConfig?.key_name}" 설정을 삭제하시겠습니까?
+                정말로 "{selectedConfig?.keyName}" 설정을 삭제하시겠습니까?
                 이 작업은 되돌릴 수 없습니다.
               </Typography>
             </DialogContent>

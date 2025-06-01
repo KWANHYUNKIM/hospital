@@ -84,11 +84,6 @@ public class BoardController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/category-types")
-    public ResponseEntity<List<BoardCategoryTypeResponse>> getCategoryTypes() {
-        return ResponseEntity.ok(boardService.getCategoryTypes());
-    }
-
     @GetMapping("/related/{id}")
     public ResponseEntity<Page<RelatedBoardResponse>> getRelatedBoards(
             @PathVariable Integer id,

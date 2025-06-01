@@ -44,13 +44,6 @@ const DashboardPage = () => {
 
   const menuItems = [
     {
-      title: '병원 관리',
-      description: '병원 정보를 등록하고 관리합니다.',
-      icon: '🏥',
-      path: '/admin/hospitals',
-      color: 'bg-blue-500'
-    },
-    {
       title: '게시판 카테고리 관리',
       description: '커뮤니티 게시판의 카테고리를 관리합니다.',
       icon: '📋',
@@ -94,14 +87,6 @@ const DashboardPage = () => {
       path: '#',
       color: 'bg-red-500',
       onClick: () => setActiveTab('server')
-    },
-    {
-      title: '색인 관리',
-      description: 'Elasticsearch 색인 관리를 합니다.',
-      icon: '🔍',
-      path: '#',
-      color: 'bg-blue-500',
-      onClick: () => setActiveTab('indexing')
     }
   ];
 
@@ -183,11 +168,13 @@ const DashboardPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-2">병원 데이터</h3>
-              <p className="text-3xl font-bold text-blue-600">{stats.collectionStats.hospitals.total}</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {stats?.collectionStats?.hospitals?.total || 0}
+              </p>
               <div className="mt-2 text-sm text-gray-600">
-                <p>완성: {stats.collectionStats.hospitals.complete}</p>
-                <p>부분: {stats.collectionStats.hospitals.partial}</p>
-                <p>미완성: {stats.collectionStats.hospitals.incomplete}</p>
+                <p>전화번호 미입력: {stats?.emptyFields?.phone || 0}</p>
+                <p>위치정보 미입력: {stats?.emptyFields?.location || 0}</p>
+                <p>주소 미입력: {stats?.emptyFields?.address || 0}</p>
               </div>
             </div>
           </div>
@@ -274,7 +261,7 @@ const DashboardPage = () => {
                         <td className="px-4 py-2">{field}</td>
                         <td className="px-4 py-2">{count}</td>
                         <td className="px-4 py-2">
-                          {Math.round((count / stats.collectionStats.hospitals.total) * 100)}%
+                          {Math.round((count / (stats?.collectionStats?.hospitals?.total || 1)) * 100)}%
                         </td>
                       </tr>
                     ))}
@@ -312,4 +299,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage; 
+export default DashboardPage;

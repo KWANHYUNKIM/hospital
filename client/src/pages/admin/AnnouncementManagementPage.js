@@ -55,11 +55,16 @@ const AnnouncementManagementPage = () => {
       const submitFormData = new FormData();
       submitFormData.append('title', formData.title);
       submitFormData.append('content', formData.content);
-      submitFormData.append('link_url', formData.link_url);
-      submitFormData.append('start_date', formData.start_date);
-      submitFormData.append('end_date', formData.end_date);
-      submitFormData.append('priority', formData.priority);
-      submitFormData.append('is_active', formData.is_active);
+      submitFormData.append('linkUrl', formData.link_url);
+      
+      // 날짜 형식 변환
+      const startDate = formData.start_date ? format(new Date(formData.start_date), 'yyyy-MM-dd HH:mm:ss') : format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+      const endDate = formData.end_date ? format(new Date(formData.end_date), 'yyyy-MM-dd HH:mm:ss') : format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd HH:mm:ss');
+      
+      submitFormData.append('startDate', startDate);
+      submitFormData.append('endDate', endDate);
+      submitFormData.append('priority', formData.priority || 0);
+      submitFormData.append('isActive', formData.is_active);
 
       if (imageFile) {
         submitFormData.append('image', imageFile);
@@ -106,10 +111,10 @@ const AnnouncementManagementPage = () => {
       content: announcement.content || '',
       image_url: announcement.image_url || '',
       link_url: announcement.link_url || '',
-      start_date: format(new Date(announcement.start_date), 'yyyy-MM-dd\'T\'HH:mm'),
-      end_date: format(new Date(announcement.end_date), 'yyyy-MM-dd\'T\'HH:mm'),
+      start_date: announcement.startDate ? format(new Date(announcement.startDate), 'yyyy-MM-dd HH:mm:ss') : '',
+      end_date: announcement.endDate ? format(new Date(announcement.endDate), 'yyyy-MM-dd HH:mm:ss') : '',
       priority: announcement.priority || 0,
-      is_active: announcement.is_active
+      is_active: announcement.isActive
     });
     if (announcement.image_url) {
       setPreviewUrl(announcement.image_url);
@@ -201,15 +206,15 @@ const AnnouncementManagementPage = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-500">
-                    {format(new Date(announcement.start_date), 'yyyy-MM-dd')} ~
-                    {format(new Date(announcement.end_date), 'yyyy-MM-dd')}
+                    {announcement.startDate ? format(new Date(announcement.startDate), 'yyyy-MM-dd') : ''} ~
+                    {announcement.endDate ? format(new Date(announcement.endDate), 'yyyy-MM-dd') : ''}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    announcement.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    announcement.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                   }`}>
-                    {announcement.is_active ? '활성' : '비활성'}
+                    {announcement.isActive ? '활성' : '비활성'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

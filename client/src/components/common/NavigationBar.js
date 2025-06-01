@@ -118,7 +118,6 @@ const NavigationBar = () => {
                           logout();
                           setIsDropdownOpen(false);
                           setIsMobileMenuOpen(false);
-                          window.location.reload();
                         }}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
@@ -210,7 +209,6 @@ const NavigationBar = () => {
                     onClick={() => {
                       logout();
                       setIsMobileMenuOpen(false);
-                      window.location.reload();
                     }}
                     className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   >

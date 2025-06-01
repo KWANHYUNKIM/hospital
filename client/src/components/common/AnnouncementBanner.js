@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAnnouncements } from '../../contexts/AnnouncementContext';
 import { FaBullhorn } from 'react-icons/fa';
+import { format } from 'date-fns';
 
 const AnnouncementBanner = () => {
   const { announcements, loading, error } = useAnnouncements();
@@ -24,7 +25,7 @@ const AnnouncementBanner = () => {
           </div>
           <div className="flex items-center">
             <span className="text-xs text-blue-500">
-              {new Date(latestAnnouncement.createdAt).toLocaleDateString()}
+              {latestAnnouncement.createdAt ? format(new Date(latestAnnouncement.createdAt), 'yyyy-MM-dd') : ''}
             </span>
           </div>
         </div>

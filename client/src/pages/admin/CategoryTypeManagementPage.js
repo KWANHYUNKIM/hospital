@@ -39,7 +39,7 @@ const CategoryTypeManagementPage = () => {
 
   const fetchCategoryTypes = async () => {
     try {
-      const response = await axios.get(`${getApiUrl()}/api/boards/category-types`, { withCredentials: true });
+      const response = await axios.get(`${getApiUrl()}/api/boards/category-types/admin`, { withCredentials: true });
       setCategoryTypes(response.data);
     } catch (error) {
       console.error('카테고리 타입 목록 조회 실패:', error);

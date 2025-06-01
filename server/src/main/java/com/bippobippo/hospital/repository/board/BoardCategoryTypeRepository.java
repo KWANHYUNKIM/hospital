@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface BoardCategoryTypeRepository extends JpaRepository<BoardCategoryType, Integer> {
     Optional<BoardCategoryType> findByTypeName(String typeName);
+    Optional<BoardCategoryType> findByTypeCode(String typeCode);
+    boolean existsByTypeCode(String typeCode);
     List<BoardCategoryType> findAllByOrderByOrderSequenceAsc();
-    boolean existsByTypeName(String typeName);
 } 

@@ -68,7 +68,7 @@ public class UserServiceImpl implements UserService {
         user.setIsEmailVerified(request.getIsEmailVerified());
 
         // 기본 사용자 역할 부여
-        Role userRole = roleRepository.findByRoleName("user")
+        Role userRole = roleRepository.findByRoleName("USER")
                 .orElseThrow(() -> new RuntimeException("기본 역할을 찾을 수 없습니다."));
         user.getRoles().add(userRole);
 
