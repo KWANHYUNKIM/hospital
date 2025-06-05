@@ -86,7 +86,6 @@ const Message = ({ message }) => {
 };
 
 const BigChatModal = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       type: 'bot',
@@ -117,7 +116,7 @@ const BigChatModal = () => {
           resolve(coordinates);
         },
         (error) => {
-          console.error('위치 정보 오류:', error); // 디버깅용 로그
+          console.error('위치 정보 오류:', error);
           reject(error);
         },
         {
@@ -130,7 +129,6 @@ const BigChatModal = () => {
   };
 
   useEffect(() => {
-    // 음성 인식 객체 초기화
     if ('webkitSpeechRecognition' in window) {
       recognitionRef.current = new window.webkitSpeechRecognition();
       recognitionRef.current.continuous = false;
@@ -176,7 +174,6 @@ const BigChatModal = () => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
 
-    // 사용자 메시지 추가
     setMessages(prev => [...prev, { type: 'user', content: inputMessage }]);
     setInputMessage('');
     setIsLoading(true);
@@ -184,13 +181,11 @@ const BigChatModal = () => {
     try {
       let coordinates = null;
       
-      // "내 주변" 검색인 경우 위치 정보 가져오기
       if (inputMessage.toLowerCase().includes('내 주변')) {
         try {
           coordinates = await getUserLocation();
           setUserLocation(coordinates);
           
-          // 위치 기반 병원 검색
           const locationResponse = await fetch('http://localhost:8001/api/hospitals/nearby', {
             method: 'POST',
             headers: {
@@ -199,7 +194,7 @@ const BigChatModal = () => {
             body: JSON.stringify({
               latitude: coordinates.latitude,
               longitude: coordinates.longitude,
-              radius: 5000 // 5km 반경
+              radius: 5000
             }),
           });
 
@@ -209,7 +204,6 @@ const BigChatModal = () => {
 
           const locationData = await locationResponse.json();
           
-          // 챗봇 응답 생성
           const response = await fetch('http://localhost:8001/api/chat/send', {
             method: 'POST',
             headers: {
@@ -227,8 +221,6 @@ const BigChatModal = () => {
           }
 
           const data = await response.json();
-          //console.log('Client: Received response from server:', data);
-          
           const botMessage = data.response || data.message || '응답을 받지 못했습니다.';
           setMessages(prev => [...prev, { type: 'bot', content: botMessage }]);
           return;
@@ -243,7 +235,6 @@ const BigChatModal = () => {
         }
       }
 
-      // 일반 검색
       const response = await fetch('http://localhost:8001/api/chat/message', {
         method: 'POST',
         headers: {
@@ -261,8 +252,6 @@ const BigChatModal = () => {
       }
 
       const data = await response.json();
-      //console.log('Client: Received response from server:', data);
-      
       const botMessage = data.response || data.message || '응답을 받지 못했습니다.';
       setMessages(prev => [...prev, { type: 'bot', content: botMessage }]);
     } catch (error) {
@@ -277,123 +266,75 @@ const BigChatModal = () => {
   };
 
   return (
-    <>
-      {/* 모달이 닫혀 있을 때 표시되는 플로팅 버튼 */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 bg-purple-600 text-white p-4 rounded-full shadow-lg hover:bg-purple-700 transition-colors duration-200 z-50"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-          />
-        </svg>
-      </button>
-
-      {/* 모달 */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-2xl h-[80vh] flex flex-col">
-            {/* 모달 헤더 */}
-            <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800">병원 검색 도우미</h2>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+    <div className="container mx-auto px-4 py-8">
+      <div className="bg-white rounded-lg shadow-lg h-[80vh] flex flex-col">
+        {/* 채팅 메시지 영역 */}
+        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+          {messages.map((message, index) => (
+            <Message key={index} message={message} />
+          ))}
+          {isLoading && (
+            <div className="flex items-start mb-4">
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mr-2 flex-shrink-0">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-              </button>
-            </div>
-
-            {/* 채팅 메시지 영역 */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              {messages.map((message, index) => (
-                <Message key={index} message={message} />
-              ))}
-              {isLoading && (
-                <div className="flex items-start mb-4">
-                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mr-2 flex-shrink-0">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div className="bg-gray-100 text-gray-800 p-3 rounded-lg">
-                    <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                    </div>
-                  </div>
+              </div>
+              <div className="bg-gray-100 text-gray-800 p-3 rounded-lg">
+                <div className="flex space-x-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                 </div>
-              )}
-              <div ref={messagesEndRef} />
+              </div>
             </div>
-
-            {/* 입력 영역 */}
-            <div className="p-4 border-t bg-white">
-              <form onSubmit={handleSubmit} className="flex gap-2">
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="메시지를 입력하세요..."
-                  className="flex-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
-                />
-                <button
-                  type="button"
-                  onClick={toggleListening}
-                  className={`p-3 rounded-lg ${
-                    isListening
-                      ? 'bg-red-500 hover:bg-red-600'
-                      : 'bg-gray-500 hover:bg-gray-600'
-                  } text-white transition-colors`}
-                >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  전송
-                </button>
-              </form>
-            </div>
-          </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
-      )}
-    </>
+
+        {/* 입력 영역 */}
+        <div className="p-4 border-t bg-white">
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="메시지를 입력하세요..."
+              className="flex-1 p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
+            />
+            <button
+              type="button"
+              onClick={toggleListening}
+              className={`p-3 rounded-lg ${
+                isListening
+                  ? 'bg-red-500 hover:bg-red-600'
+                  : 'bg-gray-500 hover:bg-gray-600'
+              } text-white transition-colors`}
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              전송
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 };
 

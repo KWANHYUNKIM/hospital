@@ -38,12 +38,16 @@ import HealthCenterList from './components/health/HealthCenterList';
 import AnnouncementBanner from './components/ui/AnnouncementBanner';
 import AnnouncementManagementPage from './pages/admin/AnnouncementManagementPage';
 import { AnnouncementProvider } from './contexts/AnnouncementContext';
-import NewsSection from './components/news/NewsSection';
+import NewsPage from './components/news/NewsPage';
 import MapPage from './components/map/MapPage';
 import RecommendHotNewsDetail from './components/news/RecommendHotNewsDetail';
 import NewsManagement from './pages/admin/NewsManagement';
 import NewsForm from './pages/admin/NewsForm';
 import CategoryManagement from './pages/admin/CategoryManagement';
+import ChannelApprovalPage from './pages/admin/ChannelApprovalPage';
+import NewsDetailList from './components/news/NewsDetailList';
+//import BigChatModal from './components/chat/BigChatModal';
+//import Jarvis from './components/chat/jarvis';
 
 const AppContent = () => {
   const { isLoggedIn, userRole, handleLogout } = useAuth();
@@ -76,6 +80,7 @@ const AppContent = () => {
                   <Route path="/admin/news/create" element={<AdminRoute><NewsForm /></AdminRoute>} />
                   <Route path="/admin/news/edit/:id" element={<AdminRoute><NewsForm /></AdminRoute>} />
                   <Route path="/admin/news/categories" element={<CategoryManagement />} />
+                  <Route path="/admin/channels/approval" element={<ChannelApprovalPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/guides/emergency" element={<EmergencyGuidePage />} />
                   <Route path="/guides/night-care" element={<NightCareGuidePage />} />
@@ -95,8 +100,9 @@ const AppContent = () => {
                   <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/health-centers" element={<HealthCenterList />} />
-                  <Route path="/news" element={<NewsSection />} />
+                  <Route path="/news" element={<NewsPage />} />
                   <Route path="/RecommdoneHotnews/:id" element={<RecommendHotNewsDetail />} />
+                  <Route path="/news/:id" element={<NewsDetailList />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </div>

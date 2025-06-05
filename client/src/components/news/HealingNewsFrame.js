@@ -14,8 +14,13 @@ export default function HealingNewsFrame({ category = null }) {
     try {
       setLoading(true);
       const response = await getNewsList(currentPage, 6, category);
-      setNews(response.items);
-      setTotalPages(response.totalPages);
+      
+      // response.content가 있는 경우 해당 데이터 사용
+      const newsData = response.content || [];
+      const totalPagesData = response.totalPages || 1;
+      
+      setNews(newsData);
+      setTotalPages(totalPagesData);
       setLoading(false);
     } catch (err) {
       setError('뉴스를 불러오는데 실패했습니다.');
@@ -44,6 +49,7 @@ export default function HealingNewsFrame({ category = null }) {
 
   if (loading) return <div className="p-4">로딩중...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
+  if (!news || news.length === 0) return <div className="p-4">표시할 뉴스가 없습니다.</div>;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

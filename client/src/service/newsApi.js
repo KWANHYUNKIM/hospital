@@ -22,7 +22,11 @@ api.interceptors.request.use((config) => {
 export const getNewsList = async (page = 1, limit = 10, category = null) => {
     try {
         const response = await api.get('/api/news', {
-            params: { page, limit, category }
+            params: { 
+                page: page - 1, // Spring은 0부터 시작하므로 1을 빼줍니다
+                limit, 
+                categoryId: category === 'all' ? null : category
+            }
         });
         return response.data;
     } catch (error) {
@@ -115,11 +119,7 @@ export const uploadNewsMedia = async (file) => {
 // 카테고리 생성
 export const createCategory = async (name) => {
     try {
-        const response = await api.post('/api/news/categories', { name }, {
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await api.post('/api/news/categories', { name });
         return response.data;
     } catch (error) {
         console.error('카테고리 생성 실패:', error);
