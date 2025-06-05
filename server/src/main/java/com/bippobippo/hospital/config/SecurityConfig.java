@@ -58,6 +58,14 @@ public class SecurityConfig {
 
             .antMatchers("/api/admin/**").hasRole("ADMIN")
 
+            // 채널 API
+            .antMatchers(HttpMethod.GET, "/api/channels/**").permitAll()
+            .antMatchers("/api/channels/**").hasRole("ADMIN")
+
+            // 뉴스 카테고리 API
+            .antMatchers(HttpMethod.GET, "/api/news/categories").permitAll()
+            .antMatchers("/api/news/categories/**").hasRole("ADMIN")
+
             // 게시판 API
             .antMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
             .antMatchers("/api/boards/**").authenticated() // POST, PUT, DELETE 포함

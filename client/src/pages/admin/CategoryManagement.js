@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getNewsCategories } from '../../service/newsApi';
+import { getNewsCategories, createCategory, updateCategory, deleteCategory } from '../../service/newsApi';
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState([]);
@@ -29,16 +29,7 @@ export default function CategoryManagement() {
     if (!newCategory.trim()) return;
 
     try {
-      const response = await fetch('http://localhost:3002/api/news/categories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: newCategory }),
-      });
-
-      if (!response.ok) throw new Error('카테고리 생성 실패');
-
+      await createCategory(newCategory);
       setNewCategory('');
       fetchCategories();
     } catch (err) {
@@ -48,16 +39,7 @@ export default function CategoryManagement() {
 
   const handleUpdateCategory = async (id, name) => {
     try {
-      const response = await fetch(`http://localhost:3002/api/news/categories/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name }),
-      });
-
-      if (!response.ok) throw new Error('카테고리 수정 실패');
-
+      await updateCategory(id, name);
       setEditingCategory(null);
       fetchCategories();
     } catch (err) {
@@ -69,12 +51,7 @@ export default function CategoryManagement() {
     if (!window.confirm('정말로 이 카테고리를 삭제하시겠습니까?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3002/api/news/categories/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('카테고리 삭제 실패');
-
+      await deleteCategory(id);
       fetchCategories();
     } catch (err) {
       setError('카테고리 삭제에 실패했습니다.');

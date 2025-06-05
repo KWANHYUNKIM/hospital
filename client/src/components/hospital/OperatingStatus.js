@@ -42,7 +42,7 @@ const OperatingStatus = ({ times }) => {
 
   // 문자열을 분 단위 숫자로 변환 (예: "0900" → 540)
   const timeToMinutes = (timeStr) => {
-    if (!timeStr || timeStr === "-") return null;
+    if (!timeStr || timeStr === "-" || timeStr === "정보 없음") return null;
     // 숫자형이면 문자열로 변환
     const strTime = String(timeStr);
     // 3자리 시간을 4자리로 변환 (예: 930 -> 0930)
@@ -54,7 +54,7 @@ const OperatingStatus = ({ times }) => {
 
   // 숫자형/문자열 시간을 "HH:MM" 형식으로 포맷팅
   const formatTime = (timeStr) => {
-    if (!timeStr || timeStr === "-") return "-";
+    if (!timeStr || timeStr === "-" || timeStr === "정보 없음") return "정보 없음";
     // 숫자형이면 문자열로 변환
     const strTime = String(timeStr);
     // 3자리 시간을 4자리로 변환 (예: 930 -> 0930)

@@ -9,12 +9,26 @@ const KakaoCallback = () => {
   const { login } = useAuth();
   const [error, setError] = useState(null);
   const hasCalledApi = useRef(false);
+  const processingRef = useRef(false);
 
   useEffect(() => {
     const handleKakaoCallback = async () => {
+      if (processingRef.current) {
+        return;
+      }
+
       try {
+        processingRef.current = true;
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
+        const errorParam = searchParams.get('error');
+        const errorDescription = searchParams.get('error_description');
+
+        if (errorParam) {
+          console.error('카카오 로그인 에러:', errorParam, errorDescription);
+          setError(`카카오 로그인 중 오류가 발생했습니다: ${errorDescription || errorParam}`);
+          return;
+        }
 
         if (!code) {
           setError('인증 코드가 없습니다.');
@@ -26,7 +40,9 @@ const KakaoCallback = () => {
         }
         hasCalledApi.current = true;
 
+        console.log('카카오 콜백 API 호출 시작');
         const response = await axios.post('/auth/kakao/callback', { code });
+        console.log('카카오 콜백 API 응답:', response.data);
 
         if (response.data.success) {
           if (response.data.isNewUser) {
@@ -54,15 +70,28 @@ const KakaoCallback = () => {
           setError('카카오 로그인 설정을 찾을 수 없습니다.');
         } else if (error.response?.data?.error === 'invalid_grant') {
           setError('인증 코드가 만료되었습니다. 다시 로그인해주세요.');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
         } else if (error.response?.data?.error === 'invalid_request') {
           setError('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+        } else if (error.response?.data?.message) {
+          setError(error.response.data.message);
+        } else if (error.message) {
+          setError(error.message);
         } else {
           setError('로그인 처리 중 오류가 발생했습니다.');
         }
+      } finally {
+        processingRef.current = false;
       }
     };
 
     handleKakaoCallback();
+
+    return () => {
+      processingRef.current = false;
+    };
   }, [navigate, location, login]);
 
   if (error) {

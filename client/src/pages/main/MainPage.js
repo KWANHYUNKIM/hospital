@@ -3,7 +3,6 @@ import AppTour from '../../components/guide/AppTour';
 import AutoComplete from '../../components/search/AutoComplete';
 import MedicalGuideSlider from '../../components/guide/MedicalGuideSlider';
 import NursingHospitalBannerSlider from '../../components/nursing/NursingHospitalBannerSlider';
-import BigChatModal from "../../components/chat/BigChatModal";
 import MedicalInfoSection from '../../components/guide/MedicalInfoSection';
 import DownloadSection from '../../components/DownloadSection';
 //import WeatherSection from '../components/WeatherSection';
@@ -55,11 +54,7 @@ const MainPage = () => {
           <section className="max-w-7xl mx-auto">
             <NursingHospitalBannerSlider />
           </section>
-
-          
         </main>
-
-        { <BigChatModal />}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import HealingNewsFrame from './HealingNewsFrame';
 import RecommendChannels from '../recommend/RecommendChannels';
 import RecommendPlaylist from '../recommend/RecommendPlaylist';
 import RecommendHotNews from './RecommendHotNews';
-import { getNewsCategories, getApiUrl } from '../../service/newsApi';
+import { getNewsCategories } from '../../service/newsApi';
 
 export default function NewsSection() {
   const [categories, setCategories] = useState([]);
@@ -15,7 +15,8 @@ export default function NewsSection() {
     const fetchCategories = async () => {
       try {
         const response = await getNewsCategories();
-        setCategories(response);
+        const categoriesData = Array.isArray(response) ? response : [];
+        setCategories(categoriesData);
       } catch (error) {
         console.error('카테고리 로딩 실패:', error);
       }
@@ -43,7 +44,7 @@ export default function NewsSection() {
           >
             전체
           </button>
-          {categories.map((category) => (
+          {categories && categories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
@@ -66,16 +67,25 @@ export default function NewsSection() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
-        {/* 뉴스 카드 리스트 */}
-        <HealingNewsFrame 
-          className="flex-1" 
-          category={selectedCategory !== 'all' ? selectedCategory : null}
-        />
-        {/* 사이드 추천/플레이리스트 등 부가 영역 */}
-        <div className="w-full md:w-72">
+        {/* 메인 컨텐츠 영역 */}
+        <div className="flex-1 space-y-6">
+          {/* 뉴스 카드 리스트 */}
+          <div className="min-h-[400px]">
+            <HealingNewsFrame 
+              category={selectedCategory !== 'all' ? selectedCategory : null}
+            />
+          </div>
+          
+          {/* 추천 채널 섹션 */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <RecommendChannels />
+          </div>
+        </div>
+
+        {/* 사이드바 영역 */}
+        <div className="w-full md:w-72 space-y-4">
           <RecommendPlaylist />
           <RecommendHotNews />
-          <RecommendChannels />
         </div>
       </div>
     </div>

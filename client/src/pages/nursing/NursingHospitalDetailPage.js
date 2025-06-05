@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchNursingHospitalDetail, fetchHospitalKeywordStats, fetchHospitalReviews } from '../../service/api';
+import { fetchNursingHospitalDetail } from '../../service/api';
+// import { fetchHospitalKeywordStats } from '../../service/api';
 import { IoMdBed } from 'react-icons/io';
 import { FaUserMd, FaUserNurse, FaPhoneAlt } from 'react-icons/fa';
 import { MdKeyboardArrowLeft } from 'react-icons/md';
@@ -30,8 +31,7 @@ const NursingHospitalDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [hospital, setHospital] = useState(null);
-  const [keywordStats, setKeywordStats] = useState([]);
-  const [reviews, setReviews] = useState([]);
+  // const [keywordStats, setKeywordStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -39,16 +39,15 @@ const NursingHospitalDetailPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [hospitalData, statsData, reviewsData] = await Promise.all([
-          fetchNursingHospitalDetail(id),
-          fetchHospitalKeywordStats(id),
-          fetchHospitalReviews(id)
-        ]);
+        const hospitalData = await fetchNursingHospitalDetail(id);
+        // const [hospitalData, statsData] = await Promise.all([
+        //   fetchNursingHospitalDetail(id),
+        //   fetchHospitalKeywordStats(id)
+        // ]);
         
         if (hospitalData) {
           setHospital(hospitalData);
-          setKeywordStats(statsData);
-          setReviews(reviewsData.reviews || []);
+          // setKeywordStats(statsData);
         } else {
           throw new Error('병원 정보를 찾을 수 없습니다.');
         }

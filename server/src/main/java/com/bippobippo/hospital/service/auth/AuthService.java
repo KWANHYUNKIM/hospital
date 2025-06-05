@@ -25,6 +25,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.http.HttpStatus;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -117,26 +120,6 @@ public class AuthService {
         return result;
     }
 
-    @Transactional(readOnly = true)
-    public Map<String, Object> startNaverLogin() {
-        var config = socialConfigRepository.findByProviderAndIsActive("naver", true)
-                .orElseThrow(() -> new RuntimeException("네이버 로그인 설정을 찾을 수 없습니다."));
-
-        String state = UUID.randomUUID().toString();
-        String naverAuthUrl = String.format(
-            "https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=%s&redirect_uri=%s&state=%s",
-            config.getClientId(),
-            config.getRedirectUri(),
-            state
-        );
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("naverAuthUrl", naverAuthUrl);
-        result.put("state", state);
-
-        return result;
-    }
-
     @Transactional
     public Map<String, Object> handleNaverCallback(String code, String state) {
         var config = socialConfigRepository.findByProviderAndIsActive("naver", true)
@@ -176,7 +159,7 @@ public class AuthService {
         String nickname = (String) response.get("name");
 
         // 기존 사용자 확인
-        var existingUser = userRepository.findBySocialIdAndSocialProvider(naverId, "naver")
+        var existingUser = userRepository.findBySocialIdAndSocialProvider(naverId, User.SocialProvider.naver)
                 .or(() -> userRepository.findByEmail(email));
 
         if (existingUser.isPresent()) {
@@ -221,86 +204,141 @@ public class AuthService {
 
     @Transactional
     public Map<String, Object> handleKakaoCallback(String code) {
-        var config = socialConfigRepository.findByProviderAndIsActive("kakao", true)
-                .orElseThrow(() -> new RuntimeException("카카오 로그인 설정을 찾을 수 없습니다."));
+        try {
+            log.info("카카오 콜백 처리 시작 - code: {}", code);
+            
+            var config = socialConfigRepository.findByProviderAndIsActive("kakao", true)
+                    .orElseThrow(() -> new RuntimeException("카카오 로그인 설정을 찾을 수 없습니다."));
+            log.info("카카오 설정 로드 완료 - clientId: {}", config.getClientId());
 
-        // 액세스 토큰 요청
-        MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
-        tokenParams.add("grant_type", "authorization_code");
-        tokenParams.add("client_id", config.getClientId());
-        tokenParams.add("redirect_uri", config.getRedirectUri());
-        tokenParams.add("code", code);
+            // 액세스 토큰 요청
+            MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
+            tokenParams.add("grant_type", "authorization_code");
+            tokenParams.add("client_id", config.getClientId());
+            tokenParams.add("redirect_uri", config.getRedirectUri());
+            tokenParams.add("code", code);
 
-        ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(
-            "https://kauth.kakao.com/oauth/token",
-            tokenParams,
-            Map.class
-        );
+            log.info("카카오 액세스 토큰 요청 시작");
+            ResponseEntity<Map> tokenResponse;
+            try {
+                tokenResponse = restTemplate.postForEntity(
+                    "https://kauth.kakao.com/oauth/token",
+                    tokenParams,
+                    Map.class
+                );
+            } catch (HttpClientErrorException e) {
+                log.error("카카오 액세스 토큰 요청 실패: {}", e.getResponseBodyAsString());
+                if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                    Map<String, Object> errorResponse = new ObjectMapper().readValue(
+                        e.getResponseBodyAsString(),
+                        Map.class
+                    );
+                    String errorCode = (String) errorResponse.get("error");
+                    String errorDescription = (String) errorResponse.get("error_description");
+                    
+                    if ("invalid_grant".equals(errorCode)) {
+                        throw new RuntimeException("인증 코드가 만료되었거나 이미 사용되었습니다. 다시 로그인해주세요.");
+                    } else if ("invalid_request".equals(errorCode)) {
+                        throw new RuntimeException("잘못된 요청입니다: " + errorDescription);
+                    } else {
+                        throw new RuntimeException("카카오 로그인 처리 중 오류가 발생했습니다: " + errorDescription);
+                    }
+                }
+                throw new RuntimeException("카카오 로그인 처리 중 오류가 발생했습니다.");
+            }
+            log.info("카카오 액세스 토큰 응답 수신");
 
-        String accessToken = (String) tokenResponse.getBody().get("access_token");
+            String accessToken = (String) tokenResponse.getBody().get("access_token");
+            if (accessToken == null) {
+                log.error("카카오 액세스 토큰이 null입니다. 응답: {}", tokenResponse.getBody());
+                throw new RuntimeException("카카오 액세스 토큰을 받지 못했습니다.");
+            }
 
-        // 사용자 정보 요청
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + accessToken);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
+            // 사용자 정보 요청
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<Map> userResponse = restTemplate.exchange(
-            "https://kapi.kakao.com/v2/user/me",
-            HttpMethod.GET,
-            entity,
-            Map.class
-        );
-
-        Map<String, Object> kakaoAccount = (Map<String, Object>) userResponse.getBody().get("kakao_account");
-        Map<String, Object> properties = (Map<String, Object>) userResponse.getBody().get("properties");
-        
-        String kakaoId = userResponse.getBody().get("id").toString();
-        String email = (String) kakaoAccount.get("email");
-        String nickname = (String) properties.get("nickname");
-        String profileImage = (String) properties.get("profile_image");
-
-        // 기존 사용자 확인
-        var existingUser = userRepository.findBySocialIdAndSocialProvider(kakaoId, "kakao")
-                .or(() -> userRepository.findByEmail(email));
-
-        if (existingUser.isPresent()) {
-            User user = existingUser.get();
-            // 인증 객체 생성
-            Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user.getUsername(),
-                null,
-                user.getAuthorities()
+            log.info("카카오 사용자 정보 요청 시작");
+            ResponseEntity<Map> userResponse = restTemplate.exchange(
+                "https://kapi.kakao.com/v2/user/me",
+                HttpMethod.GET,
+                entity,
+                Map.class
             );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            log.info("카카오 사용자 정보 응답 수신");
 
-            // JWT 토큰 생성
-            String token = jwtTokenProvider.createToken(authentication);
+            Map<String, Object> responseBody = userResponse.getBody();
+            if (responseBody == null) {
+                log.error("카카오 사용자 정보 응답이 null입니다.");
+                throw new RuntimeException("카카오 사용자 정보를 가져오는데 실패했습니다.");
+            }
+            log.info("카카오 사용자 정보: {}", responseBody);
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("isNewUser", false);
-            result.put("token", token);
-            result.put("user", Map.of(
-                "id", user.getId(),
-                "username", user.getUsername(),
-                "email", user.getEmail(),
-                "nickname", user.getNickname(),
-                "role", user.getRoles().stream()
-                        .findFirst()
-                        .map(role -> role.getRoleName())
-                        .orElse("user")
-            ));
-            return result;
-        } else {
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("isNewUser", true);
-            result.put("email", email);
-            result.put("nickname", nickname);
-            result.put("profile_image", profileImage);
-            result.put("social_id", kakaoId);
-            result.put("provider", "kakao");
-            return result;
+            String kakaoId = responseBody.get("id").toString();
+            Map<String, Object> kakaoAccount = (Map<String, Object>) responseBody.get("kakao_account");
+            Map<String, Object> properties = (Map<String, Object>) responseBody.get("properties");
+
+            if (kakaoAccount == null || properties == null) {
+                log.error("카카오 계정 정보 누락 - kakaoAccount: {}, properties: {}", kakaoAccount, properties);
+                throw new RuntimeException("카카오 계정 정보가 없습니다. 카카오 로그인 시 이메일과 프로필 정보 제공에 동의해주세요.");
+            }
+
+            String email = (String) kakaoAccount.get("email");
+            String nickname = (String) properties.get("nickname");
+            String profileImage = (String) properties.get("profile_image");
+
+            if (email == null) {
+                log.error("카카오 이메일 정보 누락");
+                throw new RuntimeException("카카오 계정의 이메일 정보가 없습니다. 카카오 로그인 시 이메일 제공에 동의해주세요.");
+            }
+
+            // 기존 사용자 확인
+            var existingUser = userRepository.findBySocialIdAndSocialProvider(kakaoId, User.SocialProvider.kakao)
+                    .or(() -> userRepository.findByEmail(email));
+
+            if (existingUser.isPresent()) {
+                User user = existingUser.get();
+                // 인증 객체 생성
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    user.getUsername(),
+                    null,
+                    user.getAuthorities()
+                );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                // JWT 토큰 생성
+                String token = jwtTokenProvider.createToken(authentication);
+
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("isNewUser", false);
+                result.put("token", token);
+                result.put("user", Map.of(
+                    "id", user.getId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail(),
+                    "nickname", user.getNickname(),
+                    "role", user.getRoles().stream()
+                            .findFirst()
+                            .map(role -> role.getRoleName())
+                            .orElse("user")
+                ));
+                return result;
+            } else {
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("isNewUser", true);
+                result.put("email", email);
+                result.put("nickname", nickname);
+                result.put("profile_image", profileImage);
+                result.put("social_id", kakaoId);
+                result.put("provider", "kakao");
+                return result;
+            }
+        } catch (Exception e) {
+            log.error("카카오 콜백 처리 중 오류 발생", e);
+            throw new RuntimeException("카카오 콜백 처리 중 오류가 발생했습니다.");
         }
     }
 
@@ -343,7 +381,7 @@ public class AuthService {
         String picture = (String) userResponse.getBody().get("picture");
 
         // 기존 사용자 확인
-        var existingUser = userRepository.findBySocialIdAndSocialProvider(googleId, "google")
+        var existingUser = userRepository.findBySocialIdAndSocialProvider(googleId, User.SocialProvider.google)
                 .or(() -> userRepository.findByEmail(email));
 
         if (existingUser.isPresent()) {

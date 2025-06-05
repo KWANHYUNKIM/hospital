@@ -65,6 +65,13 @@ const DashboardPage = () => {
       color: 'bg-pink-500'
     },
     {
+      title: '채널/영상 승인',
+      description: '채널과 영상의 승인을 관리합니다.',
+      icon: '✅',
+      path: '/admin/channels/approval',
+      color: 'bg-blue-500'
+    },
+    {
       title: 'CORS 관리',
       description: 'CORS 설정을 관리합니다.',
       icon: '🔒',

@@ -37,18 +37,4 @@ public class NursingHospitalController {
     public ResponseEntity<Map<String, Object>> getHospitalDetail(@PathVariable String ykiho) {
         return ResponseEntity.ok(nursingHospitalService.getHospitalDetail(ykiho));
     }
-
-    @GetMapping("/hospital/{ykiho}/keyword-stats")
-    public ResponseEntity<Map<String, Object>> getKeywordStats(@PathVariable String ykiho) {
-        return ResponseEntity.ok(nursingHospitalService.getKeywordStats(ykiho));
-    }
-
-    @GetMapping("/hospital/{ykiho}/reviews")
-    public ResponseEntity<Map<String, Object>> getReviews(
-            @PathVariable String ykiho,
-            @RequestParam(defaultValue = "1") String page,
-            @RequestParam(defaultValue = "10") String limit,
-            @RequestParam(defaultValue = "latest") String sort) {
-        return ResponseEntity.ok(nursingHospitalService.getReviews(ykiho, page, limit, sort));
-    }
 } 

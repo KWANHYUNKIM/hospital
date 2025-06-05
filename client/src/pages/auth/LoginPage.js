@@ -85,19 +85,13 @@ const LoginPage = () => {
     }
   };
 
-  const handleNaverLogin = async () => {
-    try {
-      const response = await axios.get('/auth/naver/start');
-
-      if (response.data && response.data.success) {
-        window.location.href = response.data.naverAuthUrl;
-      } else {
-        alert(response.data.message || '네이버 로그인에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('네이버 로그인 시작 중 오류:', error);
-      alert('네이버 로그인에 실패했습니다.');
+  const handleNaverLogin = () => {
+    if (!naverSettings.client_id || !naverSettings.redirect_uri) {
+      alert('네이버 로그인 설정이 완료되지 않았습니다.');
+      return;
     }
+    const NAVER_AUTH_URL = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${naverSettings.client_id}&redirect_uri=${naverSettings.redirect_uri}&state=${Math.random().toString(36).substring(2, 15)}`;
+    window.location.href = NAVER_AUTH_URL;
   };
 
   const handleKakaoLogin = () => {

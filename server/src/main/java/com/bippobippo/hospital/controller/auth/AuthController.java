@@ -132,25 +132,6 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/naver/start")
-    public ResponseEntity<?> startNaverLogin(HttpServletResponse response) {
-        try {
-            Map<String, Object> result = authService.startNaverLogin();
-            
-            // state를 쿠키에 저장
-            Cookie stateCookie = new Cookie("naver_oauth_state", (String) result.get("state"));
-            stateCookie.setHttpOnly(true);
-            stateCookie.setSecure(false);
-            stateCookie.setPath("/");
-            stateCookie.setMaxAge(300); // 5분
-            response.addCookie(stateCookie);
-
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(new MessageResponse("네이버 로그인 시작 중 오류가 발생했습니다."));
-        }
-    }
-
     @PostMapping("/naver/callback")
     public ResponseEntity<?> handleNaverCallback(@RequestBody Map<String, String> request, HttpServletResponse response) {
         try {

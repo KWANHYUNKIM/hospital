@@ -1,0 +1,79 @@
+package com.bippobippo.hospital.controller.news;
+
+import com.bippobippo.hospital.dto.request.news.NewsCategoryRequest;
+import com.bippobippo.hospital.dto.request.news.NewsRequest;
+import com.bippobippo.hospital.dto.response.news.NewsCategoryResponse;
+import com.bippobippo.hospital.dto.response.news.NewsResponse;
+import com.bippobippo.hospital.service.news.NewsService;
+import com.bippobippo.hospital.service.news.NewsCategoryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/news")
+@RequiredArgsConstructor
+public class NewsController {
+
+    private final NewsService newsService;
+    private final NewsCategoryService newsCategoryService;
+
+    @GetMapping("/categories")
+    public ResponseEntity<?> getCategories() {
+        return ResponseEntity.ok(newsCategoryService.getAllCategories());
+    }
+
+    @PostMapping("/categories")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createCategory(@RequestBody NewsCategoryRequest request) {
+        return ResponseEntity.ok(newsCategoryService.createCategory(request));
+    }
+
+    @PutMapping("/categories/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateCategory(@PathVariable Long id, @RequestBody NewsCategoryRequest request) {
+        return ResponseEntity.ok(newsCategoryService.updateCategory(id, request));
+    }
+
+    @DeleteMapping("/categories/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
+        newsCategoryService.deleteCategory(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getNews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) Long categoryId) {
+        Page<NewsResponse> newsPage = newsService.getNews(page, limit, categoryId);
+        return ResponseEntity.ok(newsPage);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getNewsById(@PathVariable Long id) {
+        return ResponseEntity.ok(newsService.getNewsById(id));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createNews(@RequestBody NewsRequest request) {
+        return ResponseEntity.ok(newsService.createNews(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateNews(@PathVariable Long id, @RequestBody NewsRequest request) {
+        return ResponseEntity.ok(newsService.updateNews(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteNews(@PathVariable Long id) {
+        newsService.deleteNews(id);
+        return ResponseEntity.ok().build();
+    }
+} 

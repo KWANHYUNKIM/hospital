@@ -11,7 +11,9 @@ export default function RecommendHotNews() {
     const fetchNews = async () => {
       try {
         const response = await getNewsList(1, 5); // 상위 5개 뉴스만 표시
-        setNews(response.items);
+        // response가 배열인 경우 직접 사용, 객체인 경우 items 속성 사용
+        const newsData = Array.isArray(response) ? response : (response.items || []);
+        setNews(newsData);
         setLoading(false);
       } catch (err) {
         setError('뉴스를 불러오는데 실패했습니다.');
@@ -24,6 +26,7 @@ export default function RecommendHotNews() {
 
   if (loading) return <div className="bg-gray-50 rounded p-4 mb-4">로딩중...</div>;
   if (error) return <div className="bg-gray-50 rounded p-4 mb-4 text-red-500">{error}</div>;
+  if (!news || news.length === 0) return <div className="bg-gray-50 rounded p-4 mb-4">표시할 뉴스가 없습니다.</div>;
 
   return (
     <div className="bg-gray-50 rounded p-4 mb-4">
