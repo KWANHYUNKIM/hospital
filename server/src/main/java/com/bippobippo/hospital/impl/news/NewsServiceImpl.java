@@ -4,6 +4,7 @@ import com.bippobippo.hospital.dto.request.news.NewsRequest;
 import com.bippobippo.hospital.dto.response.news.NewsResponse;
 import com.bippobippo.hospital.entity.news.News;
 import com.bippobippo.hospital.entity.news.NewsCategory;
+import com.bippobippo.hospital.entity.news.NewsImage;
 import com.bippobippo.hospital.repository.news.NewsRepository;
 import com.bippobippo.hospital.repository.news.NewsCategoryRepository;
 import com.bippobippo.hospital.service.news.NewsService;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -77,6 +79,15 @@ public class NewsServiceImpl implements NewsService {
         newsRepository.deleteById(id);
     }
 
+    @Override
+    public java.util.List<NewsResponse> getRelatedNews(Long categoryId, Long excludeId, int limit) {
+        if (categoryId == null || excludeId == null) return java.util.Collections.emptyList();
+        java.util.List<News> newsList = newsRepository.findByCategoryIdAndIdNotOrderByCreatedAtDesc(
+            categoryId, excludeId, PageRequest.of(0, limit)
+        );
+        return newsList.stream().map(this::convertToResponse).collect(java.util.stream.Collectors.toList());
+    }
+
     private NewsResponse convertToResponse(News news) {
         NewsResponse response = new NewsResponse();
         response.setId(news.getId());
@@ -88,6 +99,12 @@ public class NewsServiceImpl implements NewsService {
         response.setViewCount(news.getViewCount());
         response.setCreatedAt(news.getCreatedAt());
         response.setUpdatedAt(news.getUpdatedAt());
+        response.setRepresentativeImageUrl(news.getRepresentativeImageUrl());
+        if (news.getImages() != null) {
+            response.setImages(news.getImages().stream().map(NewsImage::getImageUrl).collect(java.util.stream.Collectors.toList()));
+        } else {
+            response.setImages(java.util.Collections.emptyList());
+        }
         return response;
     }
 } 

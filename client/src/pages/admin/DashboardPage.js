@@ -44,6 +44,13 @@ const DashboardPage = () => {
 
   const menuItems = [
     {
+      title: '뉴스 관리',
+      description: '뉴스를 생성, 수정, 삭제할 수 있습니다.',
+      icon: '📰',
+      path: '/admin/news',
+      color: 'bg-blue-600'
+    },
+    {
       title: '게시판 카테고리 관리',
       description: '커뮤니티 게시판의 카테고리를 관리합니다.',
       icon: '📋',

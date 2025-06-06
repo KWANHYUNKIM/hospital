@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getNewsDetail } from '../../service/newsApi';
+import RelatedNewsList from './RelatedNewsList';
 
 export default function NewsDetailList() {
   const { id } = useParams();
@@ -26,14 +27,18 @@ export default function NewsDetailList() {
   }, [id]);
 
   const renderContent = (content) => {
+    if (!content) return null;
+    
     try {
       const parsedContent = JSON.parse(content);
       return parsedContent.map((block, index) => {
-        if (block.type === 'paragraph') {
+        if (block.type === 'paragraph' && block.content && block.content.length > 0) {
           return (
             <p key={block.id} className="mb-4">
               {block.content.map((item, i) => (
-                <span key={i}>{item.text}</span>
+                <span key={i} className={item.styles ? Object.entries(item.styles).map(([key, value]) => `${key}-${value}`).join(' ') : ''}>
+                  {item.text}
+                </span>
               ))}
             </p>
           );
@@ -41,6 +46,7 @@ export default function NewsDetailList() {
         return null;
       });
     } catch (e) {
+      console.error('Content parsing error:', e);
       return <p className="text-gray-700">{content}</p>;
     }
   };
@@ -99,6 +105,9 @@ export default function NewsDetailList() {
       <div className="prose max-w-none">
         {news.content && renderContent(news.content)}
       </div>
+
+      {/* 관련 기사 */}
+      <RelatedNewsList categoryId={news.category_id} excludeId={news.id} />
     </div>
   );
 } 
