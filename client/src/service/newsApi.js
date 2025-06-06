@@ -152,3 +152,20 @@ export const deleteCategory = async (id) => {
         throw error;
     }
 };
+
+// 같은 카테고리의 관련 뉴스 조회
+export const getRelatedNews = async (categoryId, excludeId, limit = 3) => {
+    try {
+        const response = await api.get('/api/news/related', {
+            params: {
+                categoryId,
+                excludeId,
+                limit
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('관련 뉴스 조회 실패:', error);
+        throw error;
+    }
+};

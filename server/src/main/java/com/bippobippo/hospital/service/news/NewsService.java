@@ -11,4 +11,7 @@ public interface NewsService {
     NewsResponse createNews(NewsRequest request);
     NewsResponse updateNews(Long id, NewsRequest request);
     void deleteNews(Long id);
+
+    // 관련 뉴스 조회
+    java.util.List<NewsResponse> getRelatedNews(Long categoryId, Long excludeId, int limit);
 } 

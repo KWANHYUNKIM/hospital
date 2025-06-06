@@ -28,8 +28,8 @@ public class News {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Column(name = "representative_image_url")
+    private String representativeImageUrl;
 
     @Column(name = "view_count")
     private Integer viewCount = 0;
@@ -40,8 +40,8 @@ public class News {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "news", cascade = CascadeType.ALL)
-    private List<NewsMedia> media;
+    @OneToMany(mappedBy = "news", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private java.util.List<NewsImage> images;
 
     @PrePersist
     protected void onCreate() {

@@ -37,4 +37,10 @@ public class NewsResponse {
     
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
+    
+    @JsonProperty("representative_image_url")
+    private String representativeImageUrl;
+    
+    @JsonProperty("images")
+    private java.util.List<String> images;
 } 

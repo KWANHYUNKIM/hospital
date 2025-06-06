@@ -76,4 +76,9 @@ public class NewsController {
         newsService.deleteNews(id);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/related")
+    public ResponseEntity<?> getRelatedNews(@RequestParam Long categoryId, @RequestParam Long excludeId, @RequestParam(defaultValue = "3") int limit) {
+        return ResponseEntity.ok(newsService.getRelatedNews(categoryId, excludeId, limit));
+    }
 } 

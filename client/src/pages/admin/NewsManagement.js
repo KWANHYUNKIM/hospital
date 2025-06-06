@@ -35,7 +35,7 @@ export default function NewsManagement() {
         // 각 뉴스 항목에 대표 이미지 URL 추가
         const newsWithImages = response.content.map(item => ({
           ...item,
-          image_url: item.image_url || extractFirstImageUrl(item.content) || '/images/default-news.jpg'
+          image_url: item.image_url || extractFirstImageUrl(item.content) || '/images/default-news.png'
         }));
         setNews(newsWithImages);
         setTotalPages(response.totalPages || 1);
@@ -147,7 +147,7 @@ export default function NewsManagement() {
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = '/images/default-news.jpg';
+                  e.target.src = '/images/default-news.png';
                 }}
               />
               <div className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-sm">

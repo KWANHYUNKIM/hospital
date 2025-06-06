@@ -195,7 +195,20 @@ export default function NewsForm() {
         <div className="bg-gray-50 p-6 rounded-lg">
           <label className="block text-sm font-semibold text-gray-700 mb-2">내용</label>
           <div className="mt-2 border border-gray-300 rounded-lg overflow-hidden" style={{ height: '600px' }}>
-            <BlockNoteView editor={editor} />
+            <BlockNoteView 
+              editor={editor}
+              uploadFile={async (file) => {
+                const formData = new FormData();
+                formData.append("file", file);
+                const response = await fetch("/api/news/upload-image", {
+                  method: "POST",
+                  body: formData,
+                });
+                if (!response.ok) throw new Error("이미지 업로드 실패");
+                const data = await response.json();
+                return data.url; // 서버에서 반환하는 이미지 URL
+              }}
+            />
           </div>
         </div>
 

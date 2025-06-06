@@ -96,6 +96,20 @@ export default function NewsList() {
 
   return (
     <div className="space-y-4">
+      {/* 카테고리 필터 */}
+      <div className="flex space-x-4 mb-4">
+        <a 
+          href="/news?category=all" 
+          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+            !category || category === 'all' 
+              ? 'text-black font-bold underline underline-offset-4' 
+              : 'text-gray-600 hover:text-black'
+          }`}
+        >
+          전체
+        </a>
+      </div>
+
       {news
         .sort((a, b) => b.view_count - a.view_count)
         .map((item, index) => {

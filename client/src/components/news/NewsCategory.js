@@ -61,9 +61,6 @@ export default function NewsCategory() {
                   : 'text-gray-500 hover:text-black'
               }`}
             >
-              {isActive && (
-                <span className="mr-1">🛫</span> // 아이콘은 상황에 맞게 바꿀 수 있어요
-              )}
               {category.name}
             </Link>
           );
