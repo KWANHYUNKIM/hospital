@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/news")
 @RequiredArgsConstructor
@@ -48,8 +50,9 @@ public class NewsController {
     public ResponseEntity<?> getNews(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) Long categoryId) {
-        Page<NewsResponse> newsPage = newsService.getNews(page, limit, categoryId);
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false, defaultValue = "ACTIVE") String status) {
+        Page<NewsResponse> newsPage = newsService.getNews(page, limit, categoryId, status);
         return ResponseEntity.ok(newsPage);
     }
 
@@ -68,6 +71,13 @@ public class NewsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateNews(@PathVariable Long id, @RequestBody NewsRequest request) {
         return ResponseEntity.ok(newsService.updateNews(id, request));
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateNewsStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        String status = request.get("status");
+        return ResponseEntity.ok(newsService.updateNewsStatus(id, status));
     }
 
     @DeleteMapping("/{id}")

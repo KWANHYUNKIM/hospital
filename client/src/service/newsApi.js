@@ -169,3 +169,18 @@ export const getRelatedNews = async (categoryId, excludeId, limit = 3) => {
         throw error;
     }
 };
+
+// 뉴스 상태 변경
+export const updateNewsStatus = async (id, status) => {
+    try {
+        const response = await api.put(`/api/news/${id}/status`, { status }, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('뉴스 상태 변경 실패:', error);
+        throw error;
+    }
+};
