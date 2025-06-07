@@ -4,9 +4,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
+import java.util.List;
+import lombok.Data;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class NewsResponse {
     @JsonProperty("id")
     private Long id;
@@ -26,11 +33,17 @@ public class NewsResponse {
     @JsonProperty("category_name")
     private String categoryName;
     
-    @JsonProperty("image_url")
-    private String imageUrl;
+    @JsonProperty("representative_image_url")
+    private String representativeImageUrl;
     
     @JsonProperty("view_count")
     private Integer viewCount;
+    
+    @JsonProperty("author_id")
+    private Long authorId;
+    
+    @JsonProperty("status")
+    private String status;
     
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
@@ -38,9 +51,6 @@ public class NewsResponse {
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
     
-    @JsonProperty("representative_image_url")
-    private String representativeImageUrl;
-    
     @JsonProperty("images")
-    private java.util.List<String> images;
+    private List<String> images;
 } 

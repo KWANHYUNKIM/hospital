@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -25,6 +26,16 @@ public class NewsRequest {
     @JsonProperty("category_id")
     private Long categoryId;
 
-    @JsonProperty("image_url")
-    private String imageUrl;
+    @JsonProperty("representative_image_url")
+    private String representativeImageUrl;
+
+    @JsonProperty("images")
+    private List<String> images;
+
+    @NotNull(message = "작성자 ID는 필수입니다")
+    @JsonProperty("author_id")
+    private Long authorId;
+
+    @JsonProperty("status")
+    private String status;
 } 

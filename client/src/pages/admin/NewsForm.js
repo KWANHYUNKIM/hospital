@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createNews, updateNews, getNewsDetail, getNewsCategories } from '../../service/newsApi';
+import { useAuth } from '../../contexts/AuthContext';
 import "@blocknote/core/fonts/inter.css";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
@@ -9,6 +10,7 @@ import { useCreateBlockNote } from "@blocknote/react";
 export default function NewsForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -16,7 +18,9 @@ export default function NewsForm() {
     title: '',
     summary: '',
     category_id: '',
-    image_url: ''
+    representative_image_url: null,
+    images: [],
+    author_id: user?.id
   });
   const [availableImages, setAvailableImages] = useState([]);
   
@@ -28,13 +32,31 @@ export default function NewsForm() {
     const handleEditorChange = () => {
       const content = editor.document;
       const images = content.filter(block => block.type === 'image' && block.props?.url);
-      setAvailableImages(images.map(block => block.props.url));
+      const imageUrls = images.map(block => block.props.url);
+      setAvailableImages(imageUrls);
       
-      // 첫 번째 이미지를 자동으로 대표 이미지로 설정 (이미 설정된 이미지가 없는 경우에만)
-      if (images.length > 0 && !formData.image_url) {
+      // 기존 대표 이미지가 에디터에서 삭제된 경우 처리
+      if (formData.representative_image_url && !imageUrls.includes(formData.representative_image_url)) {
+        // 첫 번째 이미지를 새로운 대표 이미지로 설정
+        if (imageUrls.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            representative_image_url: imageUrls[0],
+            images: imageUrls.slice(1)
+          }));
+        } else {
+          // 이미지가 모두 삭제된 경우
+          setFormData(prev => ({
+            ...prev,
+            representative_image_url: null,
+            images: []
+          }));
+        }
+      } else {
+        // 대표 이미지를 제외한 나머지 이미지들을 추가 이미지로 설정
         setFormData(prev => ({
           ...prev,
-          image_url: images[0].props.url
+          images: imageUrls.filter(url => url !== prev.representative_image_url)
         }));
       }
     };
@@ -44,6 +66,52 @@ export default function NewsForm() {
       editor.off('editorContentChange', handleEditorChange);
     };
   }, [editor]);
+
+  // 이미지 선택 핸들러
+  const handleImageSelect = (selectedImageUrl) => {
+    const currentImages = [...formData.images];
+    const oldRepresentativeImage = formData.representative_image_url;
+
+    // 이전 대표 이미지를 추가 이미지 목록에 추가
+    if (oldRepresentativeImage) {
+      currentImages.push(oldRepresentativeImage);
+    }
+
+    // 선택된 이미지를 대표 이미지로 설정하고, 해당 이미지를 추가 이미지 목록에서 제거
+    setFormData(prev => ({
+      ...prev,
+      representative_image_url: selectedImageUrl,
+      images: currentImages.filter(url => url !== selectedImageUrl)
+    }));
+  };
+
+  // 이미지 삭제 핸들러
+  const handleImageDelete = (imageUrl) => {
+    if (imageUrl === formData.representative_image_url) {
+      // 대표 이미지가 삭제된 경우
+      if (formData.images.length > 0) {
+        // 첫 번째 추가 이미지를 새로운 대표 이미지로 설정
+        const [newRepresentative, ...remainingImages] = formData.images;
+        setFormData(prev => ({
+          ...prev,
+          representative_image_url: newRepresentative,
+          images: remainingImages
+        }));
+      } else {
+        // 추가 이미지가 없는 경우
+        setFormData(prev => ({
+          ...prev,
+          representative_image_url: null
+        }));
+      }
+    } else {
+      // 추가 이미지가 삭제된 경우
+      setFormData(prev => ({
+        ...prev,
+        images: prev.images.filter(url => url !== imageUrl)
+      }));
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,7 +125,9 @@ export default function NewsForm() {
             title: newsResponse.title,
             summary: newsResponse.summary,
             category_id: newsResponse.category_id,
-            image_url: newsResponse.image_url || ''
+            representative_image_url: newsResponse.representative_image_url || null,
+            images: newsResponse.images || [],
+            author_id: newsResponse.author_id
           });
           
           // 에디터에 기존 내용 설정
@@ -87,10 +157,23 @@ export default function NewsForm() {
     setError(null);
 
     try {
+      // 대표 이미지가 설정되어 있지 않은 경우 처리
+      if (!formData.representative_image_url && availableImages.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          representative_image_url: availableImages[0],
+          images: availableImages.slice(1)
+        }));
+      }
+
       const newsData = {
         ...formData,
-        content: JSON.stringify(editor.document)
+        content: JSON.stringify(editor.document),
+        author_id: user.id,
+        representative_image_url: formData.representative_image_url || null
       };
+
+      console.log('전송할 데이터:', newsData); // 데이터 전송 전 로깅
 
       if (id) {
         await updateNews(id, newsData);
@@ -99,6 +182,7 @@ export default function NewsForm() {
       }
       navigate('/admin/news');
     } catch (err) {
+      console.error('뉴스 저장 중 오류:', err);
       setError('뉴스 저장에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -168,23 +252,40 @@ export default function NewsForm() {
 
         {availableImages.length > 0 && (
           <div className="bg-gray-50 p-6 rounded-lg">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">대표 이미지 선택</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">이미지 관리</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {availableImages.map((imageUrl, index) => (
                 <div
                   key={index}
                   className={`relative cursor-pointer rounded-lg overflow-hidden border-2 ${
-                    formData.image_url === imageUrl ? 'border-blue-500' : 'border-transparent'
+                    formData.representative_image_url === imageUrl ? 'border-blue-500' : 'border-transparent'
                   }`}
-                  onClick={() => setFormData(prev => ({ ...prev, image_url: imageUrl }))}
                 >
                   <img
                     src={imageUrl}
-                    alt={`대표 이미지 ${index + 1}`}
+                    alt={`이미지 ${index + 1}`}
                     className="w-full h-32 object-cover"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center py-1 text-sm">
-                    이미지 {index + 1}
+                    {formData.representative_image_url === imageUrl ? '대표 이미지' : '추가 이미지'}
+                  </div>
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    {formData.representative_image_url !== imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => handleImageSelect(imageUrl)}
+                        className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                      >
+                        대표로 설정
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleImageDelete(imageUrl)}
+                      className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+                    >
+                      삭제
+                    </button>
                   </div>
                 </div>
               ))}

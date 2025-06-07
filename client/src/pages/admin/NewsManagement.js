@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getNewsList, deleteNews, getNewsCategories } from '../../service/newsApi';
+import { getNewsList, deleteNews, getNewsCategories, updateNewsStatus } from '../../service/newsApi';
 import { useNavigate } from 'react-router-dom';
 
 export default function NewsManagement() {
@@ -10,6 +10,7 @@ export default function NewsManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('ACTIVE');
   const navigate = useNavigate();
 
   // 뉴스 내용에서 첫 번째 이미지 URL을 추출하는 함수
@@ -30,9 +31,8 @@ export default function NewsManagement() {
   const fetchNews = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await getNewsList(page, 10, selectedCategory || null);
+      const response = await getNewsList(page, 10, selectedCategory || null, selectedStatus);
       if (response && response.content) {
-        // 각 뉴스 항목에 대표 이미지 URL 추가
         const newsWithImages = response.content.map(item => ({
           ...item,
           image_url: item.image_url || extractFirstImageUrl(item.content) || '/images/default-news.png'
@@ -69,15 +69,15 @@ export default function NewsManagement() {
   useEffect(() => {
     fetchNews();
     fetchCategories();
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedStatus]);
 
-  const handleDelete = async (id) => {
-    if (window.confirm('정말로 이 뉴스를 삭제하시겠습니까?')) {
+  const handleStatusChange = async (id, newStatus) => {
+    if (window.confirm(`뉴스 상태를 ${newStatus === 'ACTIVE' ? '활성화' : '비활성화'} 하시겠습니까?`)) {
       try {
-        await deleteNews(id);
+        await updateNewsStatus(id, newStatus);
         fetchNews(currentPage);
       } catch (err) {
-        setError('뉴스 삭제에 실패했습니다.');
+        setError('뉴스 상태 변경에 실패했습니다.');
       }
     }
   };
@@ -122,7 +122,7 @@ export default function NewsManagement() {
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 flex gap-4">
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
@@ -134,6 +134,17 @@ export default function NewsManagement() {
               {category.name}
             </option>
           ))}
+        </select>
+
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+          className="w-full md:w-64 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="ACTIVE">활성화된 뉴스</option>
+          <option value="INACTIVE">비활성화된 뉴스</option>
+          <option value="DRAFT">임시저장 뉴스</option>
+          <option value="ARCHIVED">보관된 뉴스</option>
         </select>
       </div>
 
@@ -153,6 +164,9 @@ export default function NewsManagement() {
               <div className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-sm">
                 {item.category_name}
               </div>
+              <div className="absolute top-2 left-2 bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                {item.status}
+              </div>
             </div>
             <div className="p-4">
               <h3 className="text-xl font-semibold mb-2 line-clamp-2">{item.title}</h3>
@@ -170,12 +184,21 @@ export default function NewsManagement() {
                 >
                   수정
                 </button>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="text-red-600 hover:text-red-800 font-medium"
-                >
-                  삭제
-                </button>
+                {item.status === 'ACTIVE' ? (
+                  <button
+                    onClick={() => handleStatusChange(item.id, 'INACTIVE')}
+                    className="text-yellow-600 hover:text-yellow-800 font-medium"
+                  >
+                    비활성화
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleStatusChange(item.id, 'ACTIVE')}
+                    className="text-green-600 hover:text-green-800 font-medium"
+                  >
+                    활성화
+                  </button>
+                )}
               </div>
             </div>
           </div>
