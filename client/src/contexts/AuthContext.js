@@ -70,14 +70,24 @@ export const AuthProvider = ({ children }) => {
 
   const handleLogin = async (userData) => {
     try {
-      updateAuthState(userData);
+      const csrfToken = Cookies.get('csrfToken');
+      const response = await api.get('/api/auth/check-auth', {
+        withCredentials: true,
+        headers: { 'x-csrf-token': csrfToken }
+      });
+  
+      if (response.data?.user) {
+        updateAuthState(response.data.user);
+      } else {
+        updateAuthState(null);
+      }
       return true;
     } catch (error) {
       console.error('로그인 상태 업데이트 오류:', error);
       return false;
     }
   };
-
+  
   const value = {
     isLoggedIn,
     userRole,
