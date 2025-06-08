@@ -11,6 +11,7 @@ export default function NewsDetailList() {
   const [news, setNews] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [contentImages, setContentImages] = useState([]);
 
   useEffect(() => {
     const fetchNewsDetail = async () => {
@@ -21,6 +22,23 @@ export default function NewsDetailList() {
           throw new Error('뉴스 데이터를 찾을 수 없습니다.');
         }
         setNews(response);
+        
+        // 본문에서 이미지 URL 추출
+        if (response.content) {
+          try {
+            const parsedContent = JSON.parse(response.content);
+            const images = [];
+            parsedContent.forEach(block => {
+              if (block.type === 'image' && block.props?.url) {
+                images.push(block.props.url);
+              }
+            });
+            setContentImages(images);
+          } catch (e) {
+            console.error('Content parsing error:', e);
+          }
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error('뉴스 상세 조회 실패:', err);
@@ -56,6 +74,20 @@ export default function NewsDetailList() {
                 </span>
               ))}
             </p>
+          );
+        } else if (block.type === 'image' && block.props?.url) {
+          return (
+            <div key={block.id || index} className="my-6">
+              <img
+                src={block.props.url}
+                alt={block.props.alt || '이미지'}
+                className="w-full h-auto rounded-lg"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/images/default-news.png';
+                }}
+              />
+            </div>
           );
         }
         return null;
