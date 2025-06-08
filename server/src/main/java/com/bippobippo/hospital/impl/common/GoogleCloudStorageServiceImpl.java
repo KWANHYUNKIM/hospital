@@ -26,12 +26,21 @@ public class GoogleCloudStorageServiceImpl implements GoogleCloudStorageService 
     private String projectId;
 
     private static final String PROFILE_IMAGES_FOLDER = "profile-images/";
+    private static final String NEWS_IMAGES_FOLDER = "news-images/";
 
     @Override
     public String uploadFile(MultipartFile file) {
+        return uploadFile(file, PROFILE_IMAGES_FOLDER);
+    }
+
+    public String uploadNewsImage(MultipartFile file) {
+        return uploadFile(file, NEWS_IMAGES_FOLDER);
+    }
+
+    private String uploadFile(MultipartFile file, String folder) {
         try {
             String fileName = generateFileName(file.getOriginalFilename());
-            String filePath = PROFILE_IMAGES_FOLDER + fileName;
+            String filePath = folder + fileName;
             
             BlobInfo blobInfo = storage.create(
                 BlobInfo.newBuilder(bucketName, filePath)
@@ -55,8 +64,16 @@ public class GoogleCloudStorageServiceImpl implements GoogleCloudStorageService 
 
     @Override
     public void deleteFile(String fileName) {
+        deleteFile(fileName, PROFILE_IMAGES_FOLDER);
+    }
+
+    public void deleteNewsImage(String fileName) {
+        deleteFile(fileName, NEWS_IMAGES_FOLDER);
+    }
+
+    private void deleteFile(String fileName, String folder) {
         try {
-            String filePath = PROFILE_IMAGES_FOLDER + fileName;
+            String filePath = folder + fileName;
             BlobId blobId = BlobId.of(bucketName, filePath);
             boolean deleted = storage.delete(blobId);
             if (deleted) {

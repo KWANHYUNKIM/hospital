@@ -65,11 +65,11 @@ export default function RecommendedVideos() {
   const extractYouTubeId = (url) => {
     if (!url) return null;
     
-    // 일반적인 YouTube URL 패턴
+    // 일반적인 YouTube URL 패턴 (www. 포함/미포함 모두 처리)
     const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-      /youtube\.com\/v\/([^&\n?#]+)/,
-      /youtube\.com\/watch\?.*&v=([^&\n?#]+)/
+      /(?:(?:www\.)?youtube\.com\/watch\?v=|youtu\.be\/|(?:www\.)?youtube\.com\/embed\/)([^&\n?#]+)/,
+      /(?:www\.)?youtube\.com\/v\/([^&\n?#]+)/,
+      /(?:www\.)?youtube\.com\/watch\?.*&v=([^&\n?#]+)/
     ];
 
     for (const pattern of patterns) {
@@ -80,6 +80,19 @@ export default function RecommendedVideos() {
     }
 
     return null;
+  };
+
+  const refreshThumbnail = (quality = 'maxresdefault') => {
+    const videoId = extractYouTubeId(formData.channelUri);
+    if (videoId) {
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/${quality}.jpg`;
+      setFormData(prev => ({
+        ...prev,
+        imageUrl: thumbnailUrl
+      }));
+    } else {
+      alert('유효한 YouTube URL을 먼저 입력해주세요.');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -309,26 +322,63 @@ export default function RecommendedVideos() {
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700">썸네일 URL</label>
-                <div className="mt-1 flex gap-2">
-                  <input
-                    type="url"
-                    name="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={handleInputChange}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="자동으로 추출됩니다"
-                    readOnly
-                  />
-                  {formData.imageUrl && (
-                    <img
-                      src={formData.imageUrl}
-                      alt="썸네일 미리보기"
-                      className="w-20 h-20 object-cover rounded"
+                <div className="mt-1">
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="url"
+                      name="imageUrl"
+                      value={formData.imageUrl}
+                      onChange={handleInputChange}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="썸네일 URL을 입력하거나 YouTube URL에서 자동 추출"
                     />
+                    <button
+                      type="button"
+                      onClick={() => refreshThumbnail()}
+                      className="px-3 py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 whitespace-nowrap"
+                      title="썸네일 다시 가져오기"
+                    >
+                      🔄 새로고침
+                    </button>
+                  </div>
+                  <div className="flex gap-1 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => refreshThumbnail('maxresdefault')}
+                      className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      고화질
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => refreshThumbnail('hqdefault')}
+                      className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      중화질
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => refreshThumbnail('mqdefault')}
+                      className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      저화질
+                    </button>
+                  </div>
+                  {formData.imageUrl && (
+                    <div className="mt-2">
+                      <img
+                        src={formData.imageUrl}
+                        alt="썸네일 미리보기"
+                        className="w-32 h-20 object-cover rounded border"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
                 <p className="mt-1 text-sm text-gray-500">
-                  YouTube URL을 입력하면 자동으로 썸네일이 추출됩니다
+                  YouTube URL을 입력하면 자동으로 썸네일이 추출됩니다. 추출이 안 되면 새로고침 버튼을 눌러보세요.
                 </p>
               </div>
               <div className="mb-4">

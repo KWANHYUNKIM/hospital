@@ -1,11 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createNews, updateNews, getNewsDetail, getNewsCategories } from '../../service/newsApi';
+import { createNews, updateNews, getNewsDetail, getNewsCategories, uploadNewsMedia } from '../../service/newsApi';
 import { useAuth } from '../../contexts/AuthContext';
 import "@blocknote/core/fonts/inter.css";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
 import { useCreateBlockNote } from "@blocknote/react";
+
+// 이미지 크기 조정을 위한 CSS 스타일
+const imageResizeStyles = `
+  .bn-editor .bn-block-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    user-select: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+  }
+  
+  .bn-editor .bn-block-content img:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .bn-editor .bn-selected img {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+  
+  .bn-editor .bn-block-content {
+    position: relative;
+  }
+  
+  .bn-editor [data-content-type="image"] {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .bn-editor .bn-image-resize-handle {
+    position: absolute;
+    background: #3b82f6;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: resize;
+    z-index: 10;
+  }
+  
+  .bn-editor .bn-image-resize-handle:hover {
+    background: #2563eb;
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+  }
+`;
 
 export default function NewsForm() {
   const { id } = useParams();
@@ -24,8 +76,39 @@ export default function NewsForm() {
   });
   const [availableImages, setAvailableImages] = useState([]);
   
+  // 이미지 크기 조정 스타일 추가
+  useEffect(() => {
+    // 기존 스타일이 있다면 제거
+    const existingStyle = document.getElementById('blocknote-image-styles');
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+    
+    const styleElement = document.createElement('style');
+    styleElement.id = 'blocknote-image-styles';
+    styleElement.textContent = imageResizeStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      const styleToRemove = document.getElementById('blocknote-image-styles');
+      if (styleToRemove) {
+        styleToRemove.remove();
+      }
+    };
+  }, []);
+  
   // BlockNote 에디터 초기화
-  const editor = useCreateBlockNote();
+  const editor = useCreateBlockNote({
+    uploadFile: async (file) => {
+      try {
+        const response = await uploadNewsMedia(file);
+        return response.url; // 서버에서 반환하는 이미지 URL
+      } catch (error) {
+        console.error('이미지 업로드 실패:', error);
+        throw new Error("이미지 업로드 실패");
+      }
+    }
+  });
 
   // 에디터 내용 변경 감지
   useEffect(() => {
@@ -166,9 +249,13 @@ export default function NewsForm() {
         }));
       }
 
+      // 에디터 내용을 JSON으로 변환 (이미지 크기 정보 포함)
+      const editorContent = editor.document;
+      console.log('에디터 내용 (이미지 크기 포함):', editorContent); // 디버깅용
+
       const newsData = {
         ...formData,
-        content: JSON.stringify(editor.document),
+        content: JSON.stringify(editorContent),
         author_id: user.id,
         representative_image_url: formData.representative_image_url || null
       };
@@ -298,18 +385,16 @@ export default function NewsForm() {
           <div className="mt-2 border border-gray-300 rounded-lg overflow-hidden" style={{ height: '600px' }}>
             <BlockNoteView 
               editor={editor}
-              uploadFile={async (file) => {
-                const formData = new FormData();
-                formData.append("file", file);
-                const response = await fetch("/api/news/upload-image", {
-                  method: "POST",
-                  body: formData,
-                });
-                if (!response.ok) throw new Error("이미지 업로드 실패");
-                const data = await response.json();
-                return data.url; // 서버에서 반환하는 이미지 URL
-              }}
+              theme="light"
             />
+          </div>
+          <div className="mt-2 text-sm text-gray-500">
+            <p>💡 이미지 크기 조정 팁:</p>
+            <ul className="list-disc list-inside mt-1">
+              <li>이미지를 클릭하면 모서리에 크기 조정 핸들이 나타납니다</li>
+              <li>핸들을 드래그하여 이미지 크기를 조정할 수 있습니다</li>
+              <li>Shift를 누르고 드래그하면 비율을 유지하며 크기 조정됩니다</li>
+            </ul>
           </div>
         </div>
 

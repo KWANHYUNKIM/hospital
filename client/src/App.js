@@ -40,7 +40,6 @@ import AnnouncementManagementPage from './pages/admin/AnnouncementManagementPage
 import { AnnouncementProvider } from './contexts/AnnouncementContext';
 import NewsPage from './components/news/NewsPage';
 import MapPage from './components/map/MapPage';
-import RecommendHotNewsDetail from './components/news/RecommendHotNewsDetail';
 import NewsManagement from './pages/admin/NewsManagement';
 import NewsForm from './pages/admin/NewsForm';
 import CategoryManagement from './pages/admin/CategoryManagement';
@@ -102,7 +101,6 @@ const AppContent = () => {
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/health-centers" element={<HealthCenterList />} />
                   <Route path="/news" element={<NewsPage />} />
-                  <Route path="/RecommdoneHotnews/:id" element={<RecommendHotNewsDetail />} />
                   <Route path="/news/:id" element={<NewsDetailList />} />
                   <Route path="/news/edit/:id" element={<NewsEdit />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
