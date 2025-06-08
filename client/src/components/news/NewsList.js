@@ -113,14 +113,8 @@ export default function NewsList() {
       {news
         .sort((a, b) => b.view_count - a.view_count)
         .map((item, index) => {
-          console.log('Processing news item:', item);
-          // YouTube 썸네일 추출
-          const thumbnailUrl = getYouTubeThumbnail(item.content) || 
-                             item.media?.[0]?.file_path || 
-                             item.image_url || 
-                             DEFAULT_THUMBNAIL;
-          
-          console.log('Final thumbnail URL:', thumbnailUrl);
+          // representative_image_url이 있으면 사용, 없으면 기본 이미지 사용
+          const thumbnailUrl = item.representative_image_url || DEFAULT_THUMBNAIL;
 
           return (
             <div
@@ -163,6 +157,10 @@ export default function NewsList() {
                   src={thumbnailUrl}
                   alt={item.title}
                   className="w-full h-full object-cover rounded-md"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = DEFAULT_THUMBNAIL;
+                  }}
                 />
               </Link>
             </div>
