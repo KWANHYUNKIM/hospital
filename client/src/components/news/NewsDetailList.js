@@ -76,12 +76,50 @@ export default function NewsDetailList() {
             </p>
           );
         } else if (block.type === 'image' && block.props?.url) {
+          // 이미지 크기 정보 추출
+          const { url, alt, width, height } = block.props;
+          const imageStyle = {
+            maxWidth: '100%',
+            height: 'auto'
+          };
+          
+          // 크기 정보가 있는 경우 적용
+          if (width) {
+            if (typeof width === 'number') {
+              imageStyle.width = `${width}px`;
+              imageStyle.maxWidth = 'none'; // 특정 크기가 지정된 경우 maxWidth 제한 해제
+            } else if (typeof width === 'string') {
+              imageStyle.width = width;
+              if (width.includes('px') || width.includes('%')) {
+                imageStyle.maxWidth = 'none';
+              }
+            }
+          }
+          
+          if (height) {
+            if (typeof height === 'number') {
+              imageStyle.height = `${height}px`;
+            } else if (typeof height === 'string') {
+              imageStyle.height = height;
+            }
+          }
+          
+          console.log('이미지 블록 props:', block.props); // 디버깅용
+          console.log('적용될 스타일:', imageStyle); // 디버깅용
+          
           return (
-            <div key={block.id || index} className="my-6">
+            <div key={block.id || index} className="my-6 flex justify-center">
               <img
-                src={block.props.url}
-                alt={block.props.alt || '이미지'}
-                className="w-full h-auto rounded-lg"
+                src={url}
+                alt={alt || '이미지'}
+                style={{
+                  ...imageStyle,
+                  userSelect: 'none',
+                  WebkitUserDrag: 'none',
+                  MozUserDrag: 'none'
+                }}
+                className="rounded-lg"
+                draggable={false}
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = '/images/default-news.png';
@@ -170,43 +208,6 @@ export default function NewsDetailList() {
           </p>
         )}
       </div>
-
-      {/* 대표 이미지 */}
-      {news.representative_image_url && (
-        <div className="mb-6">
-          <img
-            src={news.representative_image_url}
-            alt={news.title || '대표 이미지'}
-            className="w-full h-auto rounded-lg"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/images/default-news.png';
-            }}
-          />
-        </div>
-      )}
-
-      {/* 추가 이미지들 */}
-      {news.images && news.images.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">추가 이미지</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {news.images.map((imageUrl, index) => (
-              <div key={index} className="rounded-lg overflow-hidden">
-                <img
-                  src={imageUrl}
-                  alt={`추가 이미지 ${index + 1}`}
-                  className="w-full h-48 object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/images/default-news.png';
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* 본문 */}
       <div className="prose max-w-none">

@@ -104,14 +104,14 @@ export const uploadNewsMedia = async (file) => {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await api.post('/api/news/media', formData, {
+        const response = await api.post('/api/news/upload-image', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
         });
         return response.data;
     } catch (error) {
-        console.error('소식 미디어 업로드 실패:', error);
+        console.error('소식 이미지 업로드 실패:', error);
         throw error;
     }
 };
