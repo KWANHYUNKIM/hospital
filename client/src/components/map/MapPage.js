@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { fetchMapTypeData, fetchClusterData, getApiUrl } from '../../service/api';
+import { fetchMapTypeData, fetchClusterData } from '../../service/mapApi';
 // import MapCategoryTabs from './MapCategoryTabs';
 //  import MapFilterBar from './MapFilterBar';
 import debounce from 'lodash.debounce';

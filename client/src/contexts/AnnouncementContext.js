@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-// import axios from 'axios'; // axios 직접 사용 안하므로 주석 처리 또는 제거 가능
+import axios from 'axios';
 // import { getApiUrl } from '../utils/api'; // getApiUrl 직접 사용 안하므로 주석 처리 또는 제거 가능
-import { fetchActiveAnnouncements } from '../service/api'; // 새로 추가된 함수 import
+import { fetchActiveAnnouncements } from '../service/commonApi'; // 새로 추가된 함수 import
 
 const AnnouncementContext = createContext();
 

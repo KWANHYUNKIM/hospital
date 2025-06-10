@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchNursingHospitalDetail } from '../../service/api';
+import { fetchNursingHospitalDetail } from '../../service/nursingHospitalApi';
 // import { fetchHospitalKeywordStats } from '../../service/api';
 import { IoMdBed } from 'react-icons/io';
 import { FaUserMd, FaUserNurse, FaPhoneAlt } from 'react-icons/fa';

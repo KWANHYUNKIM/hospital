@@ -1,6 +1,6 @@
 // src/components/map/BoundaryPolygon.js
 import React, { useEffect, useRef } from 'react'
-import { fetchBoundaryGeometry } from '../../service/api'
+import { fetchBoundaryGeometry } from '../../service/mapApi'
 
 const BoundaryPolygon = ({ map, boundaryType, name, style }) => {
   const polygonRef = useRef([])

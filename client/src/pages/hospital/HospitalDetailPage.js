@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchHospitalDetail } from '../../service/api';
+import { fetchHospitalDetail } from '../../service/hospitalApi';
 import { MdKeyboardArrowLeft } from 'react-icons/md';
 
 const HospitalDetailPage = () => {

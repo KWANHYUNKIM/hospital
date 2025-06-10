@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import FilterDropdown from '../../components/search/FilterDropdown';
-import { searchPharmacies, fetchAllPharmacies } from "../../service/api";
+import { searchPharmacies, fetchAllPharmacies } from "../../service/pharmacyApi";
 import PharmacyAutoComplete from '../../components/pharmacy/PharmacyAutoComplete';
 
 const filterRegions = [
@@ -340,7 +340,7 @@ const PharmaciesList = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {pharmacies.map((pharmacy) => {
             // 거리 계산
-            const distance = pharmacy.distance;            
+            const distance = pharmacy.distance;
             return (
               <div key={pharmacy.ykiho} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
                 <div className="p-4">

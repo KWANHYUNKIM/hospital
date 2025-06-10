@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { getApiUrl } from '../../utils/api';
+import { fetchUserProfile, updateUserProfile } from '../../service/profileApi';
 
 const ProfilePage = () => {
   const { userId, username } = useAuth();
@@ -46,18 +45,18 @@ const ProfilePage = () => {
   };
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const loadProfile = async () => {
       try {
-        const response = await axios.get(`${getApiUrl()}/api/auth/users/${userId}`, { withCredentials: true });
+        const data = await fetchUserProfile(userId);
         setProfile(prev => ({
           ...prev,
-          username: response.data.username,
-          email: response.data.email,
-          nickname: response.data.nickname,
-          interests: response.data.interests || '',
-          profile_image: response.data.profile_image
+          username: data.username,
+          email: data.email,
+          nickname: data.nickname,
+          interests: data.interests || '',
+          profile_image: data.profile_image
         }));
-        setPreviewUrl(response.data.profile_image || '');
+        setPreviewUrl(data.profile_image || '');
       } catch (error) {
         console.error('프로필 로딩 실패:', error);
         setError('프로필 정보를 불러오는데 실패했습니다.');
@@ -65,7 +64,7 @@ const ProfilePage = () => {
     };
 
     if (userId) {
-      fetchProfile();
+      loadProfile();
     }
   }, [userId]);
 
@@ -123,34 +122,15 @@ const ProfilePage = () => {
     }
 
     try {
-      const formData = new FormData();
-      formData.append('nickname', profile.nickname);
-      
-      // interests를 JSON 형식으로 변환
-      const interestsArray = Array.isArray(profile.interests) 
-        ? profile.interests 
-        : (profile.interests ? JSON.parse(profile.interests) : []);
-      formData.append('interests', JSON.stringify(interestsArray));
-      
-      if (profile.newPassword) {
-        formData.append('current_password', profile.currentPassword);
-        formData.append('new_password', profile.newPassword);
-      }
+      const profileData = {
+        nickname: profile.nickname,
+        interests: profile.interests,
+        currentPassword: profile.currentPassword,
+        newPassword: profile.newPassword,
+        profileImage: profileImage
+      };
 
-      if (profileImage) {
-        formData.append('profile_image', profileImage);
-      }
-
-      const response = await axios.put(
-        `${getApiUrl()}/api/auth/users/${userId}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          withCredentials: true
-        }
-      );
+      await updateUserProfile(userId, profileData);
 
       setMessage('프로필이 성공적으로 업데이트되었습니다.');
       setProfile(prev => ({

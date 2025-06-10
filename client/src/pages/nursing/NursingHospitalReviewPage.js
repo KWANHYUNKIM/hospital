@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import HospitalReview from '../../components/hospital/HospitalReview';
 import { useAuth } from '../../contexts/AuthContext';
-import { fetchNursingHospitalDetail } from '../../service/api';
+import { fetchNursingHospitalDetail } from '../../service/nursingHospitalApi';
 
 const NursingHospitalReviewPage = () => {
   const { id } = useParams();

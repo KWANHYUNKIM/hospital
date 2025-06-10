@@ -1,4 +1,4 @@
-import { fetchMedicalStats } from '../../service/api';
+import { fetchMedicalStats } from '../../service/mapApi';
 
 // 초기 데이터
 export const initialMedicalTypes = [

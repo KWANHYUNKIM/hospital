@@ -8,7 +8,7 @@ import {
   FaTint,
   FaClock
 } from 'react-icons/fa';
-import { fetchLatestWeather } from '../service/api';
+import { fetchLatestWeather } from '../../service/commonApi';
 
 const ICON_MAP = {
   '1': <FaSun className="w-12 h-12 text-yellow-500"/>,      // 맑음

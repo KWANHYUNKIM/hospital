@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";  // 쿼리 파라미터 받기
 import { useNavigate } from "react-router-dom";
-import { fetchHospitals, fetchHospitalDetail } from "../../service/api";
+import { fetchHospitals, fetchHospitalDetail } from "../../service/hospitalApi";
 import HospitalMajorList from '../../components/hospital/HospitalMajorList';
 import OperatingStatus from '../../components/hospital/OperatingStatus';
 import DistanceInfo from '../../components/hospital/DistanceInfo';
