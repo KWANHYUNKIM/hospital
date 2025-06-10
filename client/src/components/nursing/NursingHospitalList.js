@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { fetchNursingHospitals, getApiUrl } from "../../service/api";
+import { fetchNursingHospitals } from "../../service/nursingHospitalApi";
 import HospitalMajorList from "../hospital/HospitalMajorList";
 import DistanceInfo from "../hospital/DistanceInfo";
 import HealthCenterBanner from '../health/HealthCenterBanner';
@@ -23,33 +23,8 @@ const NursingHospitalList = () => {
   const [selectedRegion, setSelectedRegion] = useState("전국");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // URL 파라미터에서 검색어와 지역 읽기
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const query = params.get("query") || "";
-    const region = params.get("region") || "전국";
-    const x = params.get("x");
-    const y = params.get("y");
-    const distance = params.get("distance");
-    
-    setSearchQuery(query);
-    setSelectedRegion(region);
-    
-    // 위치 기반 검색인 경우
-    if (x && y) {
-      fetchHospitalsData({ 
-        x, 
-        y, 
-        distance: distance || '10km',
-        region: region !== "전국" ? region : undefined
-      });
-    } else {
-      fetchHospitalsData();
-    }
-  }, [location.search]);
-
-  // 데이터 가져오기
-  const fetchHospitalsData = async (locationParams = null) => {
+  // 데이터 가져오기 함수를 useCallback으로 메모이제이션
+  const fetchHospitalsData = useCallback(async (locationParams = null) => {
     try {
       setLoading(true);
       setError(null);
@@ -90,7 +65,32 @@ const NursingHospitalList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, limit, selectedRegion, searchQuery]);
+
+  // URL 파라미터에서 검색어와 지역 읽기
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const query = params.get("query") || "";
+    const region = params.get("region") || "전국";
+    const x = params.get("x");
+    const y = params.get("y");
+    const distance = params.get("distance");
+    
+    setSearchQuery(query);
+    setSelectedRegion(region);
+    
+    // 위치 기반 검색인 경우
+    if (x && y) {
+      fetchHospitalsData({ 
+        x, 
+        y, 
+        distance: distance || '10km',
+        region: region !== "전국" ? region : undefined
+      });
+    } else {
+      fetchHospitalsData();
+    }
+  }, [location.search, fetchHospitalsData]);
 
   // 위치 기반 검색 결과 처리
   const handleLocationSearch = (searchResults) => {
@@ -112,7 +112,7 @@ const NursingHospitalList = () => {
     } else {
       fetchHospitalsData();
     }
-  }, [currentPage, limit, selectedRegion, searchQuery, location.search]);
+  }, [currentPage, limit, selectedRegion, searchQuery, location.search, fetchHospitalsData]);
 
   // 페이지네이션 핸들러
   const handlePrevPage = () => {

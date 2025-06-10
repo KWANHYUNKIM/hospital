@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getApiUrl, searchLocation } from '../../service/api';
+import { getApiUrl } from '../../utils/api';
+import { searchLocation } from '../../service/mapApi';
 
 const MapSearchBar = ({ onSearch, isVisible }) => {
   const [searchQuery, setSearchQuery] = useState('');

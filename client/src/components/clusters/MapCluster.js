@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchMapClusterData } from '../../service/api';
+import { fetchMapClusterData } from '../../service/mapApi';
 import BoundaryPolygon from '../map/BoundaryPolygon';
 
 const MapCluster = ({ map, zoomLevel, onClusterClick }) => {
