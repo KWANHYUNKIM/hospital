@@ -10,6 +10,8 @@ import PharmaciesList from "./pages/hospital/PharmaciesList";
 import Footer from './components/common/Footer';
 import AdSense from './components/ui/AdSense';
 import LoginPage from "./pages/auth/LoginPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import AdminRoute from "./components/AdminRoute";
 import EmergencyGuidePage from './pages/guides/EmergencyGuidePage';
 import NightCareGuidePage from './pages/guides/NightCareGuidePage';
@@ -82,6 +84,8 @@ const AppContent = () => {
                   <Route path="/admin/news/categories" element={<CategoryManagement />} />
                   <Route path="/admin/channels/approval" element={<ChannelApprovalPage />} />
                   <Route path="/login" element={<LoginPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/guides/emergency" element={<EmergencyGuidePage />} />
                   <Route path="/guides/night-care" element={<NightCareGuidePage />} />
                   <Route path="/guides/weekend-care" element={<WeekendCareGuidePage />} />
