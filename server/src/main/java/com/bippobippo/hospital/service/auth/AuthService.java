@@ -8,6 +8,7 @@ import com.bippobippo.hospital.repository.user.UserRepository;
 import com.bippobippo.hospital.repository.user.RoleRepository;
 import com.bippobippo.hospital.repository.common.SocialConfigRepository;
 import com.bippobippo.hospital.security.JwtTokenProvider;
+import com.bippobippo.hospital.service.common.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,6 +33,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Slf4j
 @Service
@@ -46,6 +49,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final RestTemplate restTemplate;
+    private final EmailService emailService;
 
     public void register(RegisterRequest request) {
         // 아이디 중복 체크
@@ -441,10 +445,79 @@ public class AuthService {
     @Transactional(readOnly = true)
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UsernameNotFoundException("인증되지 않은 사용자입니다.");
+        if (authentication == null || authentication.getName() == null) {
+            return null;
         }
+        
         return userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + authentication.getName()));
+                .orElse(null);
+    }
+
+    @Transactional
+    public void sendPasswordResetEmail(String email) {
+        // 사용자 확인
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("등록되지 않은 이메일입니다."));
+        
+        // 비밀번호 재설정 토큰 생성 (UUID 사용)
+        String resetToken = UUID.randomUUID().toString();
+        
+        // 토큰과 만료 시간을 DB에 저장 (1시간 후 만료)
+        user.setResetToken(resetToken);
+        LocalDateTime expiryTime = LocalDateTime.now(ZoneId.of("Asia/Seoul")).plusHours(1);
+        user.setResetTokenExpiry(expiryTime);
+        userRepository.save(user);
+        
+        log.info("비밀번호 재설정 토큰 생성: 이메일={}, 토큰={}, 만료시간={}", email, resetToken, expiryTime);
+        
+        try {
+            // 실제 이메일 전송
+            emailService.sendPasswordResetEmail(email, resetToken);
+            log.info("비밀번호 재설정 이메일 전송 완료: {}", email);
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 이메일 전송 실패: {}", email, e);
+            throw new RuntimeException("이메일 전송 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean verifyResetToken(String token) {
+        User user = userRepository.findByResetToken(token).orElse(null);
+        if (user == null) {
+            log.warn("토큰 검증 실패: 토큰을 찾을 수 없음 - {}", token);
+            return false;
+        }
+        
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+        log.info("토큰 검증: 토큰={}, 현재시간={}, 만료시간={}", token, now, user.getResetTokenExpiry());
+        
+        // 토큰 만료 시간 확인
+        boolean isValid = user.getResetTokenExpiry() != null && 
+               user.getResetTokenExpiry().isAfter(now);
+        
+        log.info("토큰 검증 결과: {}", isValid);
+        return isValid;
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        User user = userRepository.findByResetToken(token)
+                .orElseThrow(() -> new RuntimeException("유효하지 않은 토큰입니다."));
+        
+        // 토큰 만료 시간 확인
+        if (user.getResetTokenExpiry() == null || 
+            user.getResetTokenExpiry().isBefore(LocalDateTime.now(ZoneId.of("Asia/Seoul")))) {
+            throw new RuntimeException("만료된 토큰입니다.");
+        }
+        
+        // 비밀번호 변경
+        user.setPassword(passwordEncoder.encode(newPassword));
+        
+        // 토큰 제거 (재사용 방지)
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+        
+        userRepository.save(user);
+        log.info("비밀번호 재설정 완료: {}", user.getEmail());
     }
 } 

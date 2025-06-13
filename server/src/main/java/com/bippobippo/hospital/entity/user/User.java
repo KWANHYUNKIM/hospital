@@ -59,6 +59,12 @@ public class User implements UserDetails {
     @Column(name = "is_email_verified")
     private Boolean isEmailVerified;
 
+    @Column(name = "reset_token", length = 255)
+    private String resetToken;
+
+    @Column(name = "reset_token_expiry")
+    private LocalDateTime resetTokenExpiry;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

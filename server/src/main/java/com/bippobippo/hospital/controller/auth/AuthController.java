@@ -2,6 +2,7 @@ package com.bippobippo.hospital.controller.auth;
 
 import com.bippobippo.hospital.dto.request.user.LoginRequest;
 import com.bippobippo.hospital.dto.request.user.RegisterRequest;
+import com.bippobippo.hospital.dto.request.user.ForgotPasswordRequest;
 import com.bippobippo.hospital.dto.MessageResponse;
 import com.bippobippo.hospital.entity.user.User;
 import com.bippobippo.hospital.service.auth.AuthService;
@@ -129,6 +130,59 @@ public class AuthController {
             ));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new MessageResponse("서버 오류가 발생했습니다."));
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            // 이메일 존재 여부 확인
+            if (!userService.existsByEmail(request.getEmail())) {
+                return ResponseEntity.badRequest().body(new MessageResponse("등록되지 않은 이메일입니다."));
+            }
+            
+            // 비밀번호 재설정 이메일 전송
+            authService.sendPasswordResetEmail(request.getEmail());
+            
+            return ResponseEntity.ok(new MessageResponse("비밀번호 재설정 링크를 이메일로 전송했습니다."));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("비밀번호 재설정 요청 처리 중 오류가 발생했습니다."));
+        }
+    }
+
+    @PostMapping("/verify-reset-token")
+    public ResponseEntity<?> verifyResetToken(@RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("토큰이 필요합니다."));
+            }
+            
+            boolean isValid = authService.verifyResetToken(token);
+            if (isValid) {
+                return ResponseEntity.ok(new MessageResponse("유효한 토큰입니다."));
+            } else {
+                return ResponseEntity.badRequest().body(new MessageResponse("만료되었거나 유효하지 않은 토큰입니다."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("토큰 검증 중 오류가 발생했습니다."));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            String password = request.get("password");
+            
+            if (token == null || token.isEmpty() || password == null || password.isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("토큰과 비밀번호가 필요합니다."));
+            }
+            
+            authService.resetPassword(token, password);
+            return ResponseEntity.ok(new MessageResponse("비밀번호가 성공적으로 변경되었습니다."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
         }
     }
 
