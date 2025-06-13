@@ -53,6 +53,16 @@ public class EmailServiceImpl implements EmailService {
         return false;
     }
 
+    @Override
+    public void sendPasswordResetEmail(String email, String resetToken) throws Exception {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("비밀번호 재설정");
+        message.setText("비밀번호 재설정 토큰: " + resetToken + "\n\n이 토큰은 1시간 동안 유효합니다.");
+        mailSender.send(message);
+        log.info("Password reset email sent to: {}", email);
+    }
+
     private static class EmailVerification {
         final String code;
         final LocalDateTime expiresAt;

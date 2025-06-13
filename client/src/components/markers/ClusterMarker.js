@@ -23,21 +23,32 @@ const ClusterMarker = ({
       icon: {
         content: `
           <div style="
-            cursor: pointer;
-            background-color: #FF5252;
-            color: white;
-            border-radius: 50%;
-            width: ${size}px;
-            height: ${size}px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: ${fontSize}px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            border: 2px solid #FFFFFF;
+            pointer-events: none;
           ">
-            ${clusterCount}
+            <div style="
+              background: #fffbe7;
+              border: 2px solid #FFD43B;
+              border-radius: 16px;
+              padding: 6px 16px;
+              color: #222;
+              font-weight: bold;
+              font-size: ${fontSize}px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+              pointer-events: auto;
+            ">
+              ${clusterCount}
+            </div>
+            <div style="
+              width: 0;
+              height: 0;
+              border-left: 10px solid transparent;
+              border-right: 10px solid transparent;
+              border-top: 12px solid #FFD43B;
+              margin-top: -2px;
+            "></div>
           </div>
         `,
         size: new window.naver.maps.Size(size, size),
@@ -61,21 +72,32 @@ const ClusterMarker = ({
       newMarker.setIcon({
         content: `
           <div style="
-            cursor: pointer;
-            background-color: #FF5252;
-            color: white;
-            border-radius: 50%;
-            width: ${size}px;
-            height: ${size}px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: ${fontSize}px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-            border: 2px solid #FFFFFF;
+            pointer-events: none;
           ">
-            ${clusterCount}
+            <div style="
+              background: #fffbe7;
+              border: 2px solid #FFD43B;
+              border-radius: 16px;
+              padding: 6px 16px;
+              color: #222;
+              font-weight: bold;
+              font-size: ${fontSize}px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+              pointer-events: auto;
+            ">
+              ${clusterCount}
+            </div>
+            <div style="
+              width: 0;
+              height: 0;
+              border-left: 10px solid transparent;
+              border-right: 10px solid transparent;
+              border-top: 12px solid #FFD43B;
+              margin-top: -2px;
+            "></div>
           </div>
         `,
         size: new window.naver.maps.Size(size, size),
@@ -87,21 +109,32 @@ const ClusterMarker = ({
       newMarker.setIcon({
         content: `
           <div style="
-            cursor: pointer;
-            background-color: #FF5252;
-            color: white;
-            border-radius: 50%;
-            width: ${size}px;
-            height: ${size}px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: ${fontSize}px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            border: 2px solid #FFFFFF;
+            pointer-events: none;
           ">
-            ${clusterCount}
+            <div style="
+              background: #fffbe7;
+              border: 2px solid #FFD43B;
+              border-radius: 16px;
+              padding: 6px 16px;
+              color: #222;
+              font-weight: bold;
+              font-size: ${fontSize}px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+              pointer-events: auto;
+            ">
+              ${clusterCount}
+            </div>
+            <div style="
+              width: 0;
+              height: 0;
+              border-left: 10px solid transparent;
+              border-right: 10px solid transparent;
+              border-top: 12px solid #FFD43B;
+              margin-top: -2px;
+            "></div>
           </div>
         `,
         size: new window.naver.maps.Size(size, size),

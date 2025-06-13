@@ -44,10 +44,10 @@ const MapCluster = ({ map, zoomLevel, onClusterClick }) => {
 
   // 클러스터 색상 결정 (119 컨셉)
   const getClusterColor = (total) => {
-    if (total > 100) return '#E63946'; // 진한 응급차 레드
-    if (total > 50) return '#FF4B4B';  // 밝은 응급차 레드
-    if (total > 20) return '#FF6B6B';  // 연한 레드
-    return '#FF8585';  // 아주 연한 레드
+    if (total > 100) return '#FFD43B'; // 진한 노랑
+    if (total > 50) return '#FFE066';  // 밝은 노랑
+    if (total > 20) return '#FFF9E3';  // 연노랑
+    return '#FFFBEA';                  // 아주 연한 노랑
   };
 
   // 클러스터 마커 생성 및 관리
@@ -72,59 +72,34 @@ const MapCluster = ({ map, zoomLevel, onClusterClick }) => {
       const size = Math.min(32 + Math.floor(Math.log2(total + 1) * 3), 48);
 
       const markerContent = `
-        <div style="position: relative;">
-          <div class="cluster-marker" style="
-            width: ${size}px;
-            height: ${size}px;
-            line-height: ${size}px;
-            background-color: ${getClusterColor(total)};
-            color: white;
-            text-align: center;
-            font-size: 13px;
+        <div style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          pointer-events: none;
+        ">
+          <div style="
+            background: #fffbe7;
+            border: 2px solid #FFD43B;
+            border-radius: 16px;
+            padding: 6px 16px;
+            color: #222;
             font-weight: bold;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: max-content;
-            padding: 0 8px;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            z-index: 1;
+            font-size: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            pointer-events: auto;
           ">
             ${cluster.name}
           </div>
-          <div class="cluster-info" style="
-            display: none;
-            position: absolute;
-            top: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 4px 8px;
-            background: #E63946;
-            border: 1.5px solid white;
-            border-radius: 4px;
-            font-size: 12px;
-            color: white;
-            white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            z-index: 2;
-          ">
-            병원 ${cluster.hospitalCount || 0} · 약국 ${cluster.pharmacyCount || 0}
-          </div>
+          <div style="
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 12px solid #FFD43B;
+            margin-top: -2px;
+          "></div>
         </div>
-        <style>
-          .cluster-marker:hover {
-            transform: scale(1.1);
-          }
-          .cluster-marker:hover + .cluster-info {
-            display: block !important;
-          }
-        </style>
       `;
 
       const marker = new window.naver.maps.Marker({

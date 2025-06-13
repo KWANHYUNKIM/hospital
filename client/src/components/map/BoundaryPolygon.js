@@ -56,12 +56,13 @@ const BoundaryPolygon = ({ map, boundaryType, name, style }) => {
         const polygon = new window.naver.maps.Polygon({
           map,
           paths: [latlngs],
-          strokeColor: style?.strokeColor || '#ff0000',
-          strokeOpacity: style?.strokeOpacity ?? 0.6,
-          strokeWeight: style?.strokeWeight ?? 3,
-          fillColor: style?.fillColor || '#ff0000',
-          fillOpacity: style?.fillOpacity ?? 0.3,
-          zIndex: style?.zIndex ?? 1000
+          strokeColor: style?.strokeColor || '#FFD43B',
+          strokeOpacity: style?.strokeOpacity ?? 0.85,
+          strokeWeight: style?.strokeWeight ?? 4,
+          fillColor: style?.fillColor || '#FFF9E3',
+          fillOpacity: style?.fillOpacity ?? 0.25,
+          zIndex: style?.zIndex ?? 1000,
+          // 네이버 지도는 polygon에 직접 shadow 옵션이 없으므로, stroke와 fill을 밝게 조합
         })
 
         polygonRef.current.push(polygon)
