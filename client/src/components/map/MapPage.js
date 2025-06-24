@@ -175,10 +175,28 @@ const MapPage = () => {
     try {
       setIsLoading(true);
       setLoadingMessage('위치로 이동 중...');
-      const point = new window.naver.maps.LatLng(result.lat, result.lng);
+      
+      // 좌표 정보 안전하게 추출
+      const lat = result.lat || result.location?.lat;
+      const lng = result.lng || result.location?.lon;
+      
+      if (!lat || !lng) {
+        console.error('검색 결과에 유효한 좌표가 없습니다:', result);
+        setLoadingMessage('위치 정보를 찾을 수 없습니다.');
+        return;
+      }
+      
+      const point = new window.naver.maps.LatLng(lat, lng);
       map.setCenter(point);
       map.setZoom(18);
-      await new Promise(resolve => window.naver.maps.Event.addListenerOnce(map, 'idle', resolve));
+      
+      // Naver Maps API가 로드되었는지 확인
+      if (window.naver && window.naver.maps && window.naver.maps.Event && window.naver.maps.Event.addListenerOnce) {
+        await new Promise(resolve => window.naver.maps.Event.addListenerOnce(map, 'idle', resolve));
+      } else {
+        // API가 로드되지 않은 경우 잠시 대기
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
       setLoadingMessage('데이터를 불러오는 중...');
       const center = map.getCenter();

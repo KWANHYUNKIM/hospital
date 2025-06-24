@@ -105,7 +105,32 @@ public class MapServiceImpl implements MapService {
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
 
             List<Map<String, Object>> results = new ArrayList<>();
-            response.getHits().forEach(hit -> results.add(hit.getSourceAsMap()));
+            response.getHits().forEach(hit -> {
+                Map<String, Object> sourceMap = hit.getSourceAsMap();
+                
+                // name 필드 일관성 있게 설정
+                String displayName = (String) sourceMap.get("yadmNm");
+                if (displayName == null) {
+                    displayName = (String) sourceMap.get("name");
+                }
+                sourceMap.put("name", displayName);
+                
+                // address 필드 일관성 있게 설정
+                String displayAddress = (String) sourceMap.get("addr");
+                if (displayAddress == null) {
+                    displayAddress = (String) sourceMap.get("address");
+                }
+                sourceMap.put("address", displayAddress);
+                
+                // location 정보를 lat, lng로도 추가
+                Map<String, Object> location = (Map<String, Object>) sourceMap.get("location");
+                if (location != null) {
+                    sourceMap.put("lat", location.get("lat"));
+                    sourceMap.put("lng", location.get("lon"));
+                }
+                
+                results.add(sourceMap);
+            });
             return results;
         } catch (IOException e) {
             throw new RuntimeException("검색 중 오류가 발생했습니다.", e);

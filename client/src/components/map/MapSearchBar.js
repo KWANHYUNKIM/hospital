@@ -12,12 +12,20 @@ const MapSearchBar = ({ onSearch, isVisible }) => {
   // 검색어가 변경될 때마다 자동완성 결과 업데이트
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (searchQuery.trim().length > 1) {
+      if (searchQuery && searchQuery.trim().length > 1) {
         setIsLoading(true);
         setError(null);
         try {
           const results = await searchLocation(searchQuery);
-          setSuggestions(results);
+          // 검색 결과 데이터 매핑 개선
+          const mappedResults = results.map(item => ({
+            ...item,
+            name: item.yadmNm || item.name || '이름 없음',
+            address: item.addr || item.address || '주소 없음',
+            lat: item.location?.lat || item.lat,
+            lng: item.location?.lon || item.lng
+          }));
+          setSuggestions(mappedResults);
           setShowSuggestions(true);
         } catch (error) {
           console.error('자동완성 검색 중 오류 발생:', error);
