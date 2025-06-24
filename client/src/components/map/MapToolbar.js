@@ -13,7 +13,8 @@ import {
   FaExpand,
   FaCompress,
   FaUndo,
-  FaLocationArrow
+  FaLocationArrow,
+  FaRoute
 } from 'react-icons/fa';
 import { MdOutlineKeyboardArrowUp } from 'react-icons/md';
 import { initialMedicalTypes, pharmacyTypes, getMedicalStats } from './constants';
@@ -26,6 +27,7 @@ import ResetControl from './ResetControl';
 import ListViewControl from './ListViewControl';
 import LayerControl from './LayerControl';
 import MapStyleControl from './MapStyleControl';
+import RouteFinder from './RouteFinder';
 
 function MapToolbar({
   onSearch,
@@ -44,11 +46,15 @@ function MapToolbar({
   map,
   hospitals,
   pharmacies,
-  onItemClick
+  onItemClick,
+  selectedInfo
 }) {
   const [showFilter, setShowFilter] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showRouteFinder, setShowRouteFinder] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [destination, setDestination] = useState(null);
   const [medicalStats, setMedicalStats] = useState({
     hospitals: initialMedicalTypes,
     pharmacies: pharmacyTypes
@@ -56,6 +62,54 @@ function MapToolbar({
   const [selectedTypes, setSelectedTypes] = useState(initialMedicalTypes.map(t => t.key));
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // 현재 위치 가져오기
+  const getCurrentLocation = useCallback(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error('현재 위치를 가져올 수 없습니다:', error);
+          // 기본 위치 설정 (서울)
+          setCurrentLocation({
+            lat: 37.5665,
+            lng: 126.9780
+          });
+        }
+      );
+    } else {
+      // 기본 위치 설정 (서울)
+      setCurrentLocation({
+        lat: 37.5665,
+        lng: 126.9780
+      });
+    }
+  }, []);
+
+  // 컴포넌트 마운트 시 현재 위치 가져오기
+  useEffect(() => {
+    getCurrentLocation();
+  }, [getCurrentLocation]);
+
+  // 길찾기 버튼 클릭 핸들러 (토글)
+  const handleRouteFinder = () => {
+    setShowRouteFinder((prev) => !prev);
+  };
+
+  // 검색, 도움말 등 다른 메뉴 클릭 시 RouteFinder 닫기
+  const handleSearch = () => {
+    setShowRouteFinder(false);
+    onSearch && onSearch();
+  };
+  const handleHelp = () => {
+    setShowRouteFinder(false);
+    setShowHelp(true);
+  };
 
   // 통계 데이터 가져오기 (이 부분을 주석 처리)
   /*
@@ -113,13 +167,14 @@ function MapToolbar({
   }, []);
 
   const buttons = [
-    { label: '검색',        icon: <FaSearch size={18} />,       onClick: onSearch },
+    { label: '검색',        icon: <FaSearch size={18} />,       onClick: handleSearch },
+    { label: '길찾기',      icon: <FaRoute size={18} />,         onClick: handleRouteFinder },
     // { label: '히트맵',      icon: <FaThermometerHalf size={18} />, onClick: onToggleHeatmap },
     // { label: '대중교통',    icon: <FaBus size={18} />,          onClick: onPublicTransport },
     // { label: '북마크',      icon: <FaBookmark size={18} />,     onClick: onBookmark },
     // { label: '공유',        icon: <FaShareAlt size={18} />,     onClick: onCopyLink },
     { label: '풀스크린',    icon: isFullscreen ? <FaCompress size={18} /> : <FaExpand size={18} />, onClick: toggleFullscreen },
-    { label: '도움말',      icon: <FaInfoCircle size={18} />,   onClick: () => setShowHelp(true) },
+    { label: '도움말',      icon: <FaInfoCircle size={18} />,   onClick: handleHelp },
     // { label: '필터',        icon: <FaSatellite size={18} />,    onClick: () => setShowFilter(v => !v) }
   ];
 
@@ -131,7 +186,7 @@ function MapToolbar({
           메뉴
         </div>
         <div className="flex flex-col">
-          {buttons.slice(0, 1).map((btn, i) => (
+          {buttons.slice(0, 2).map((btn, i) => (
             <button
               key={i}
               onClick={btn.onClick}
@@ -152,9 +207,9 @@ function MapToolbar({
           />
           <LayerControl onToggleLayers={onToggleLayers} />
           <MapStyleControl map={map} onSwitchStyle={onSwitchStyle} />
-          {buttons.slice(1).map((btn, i) => (
+          {buttons.slice(2).map((btn, i) => (
             <button
-              key={i + 1}
+              key={i + 2}
               onClick={btn.onClick}
               aria-label={btn.label}
               className="flex items-center justify-center w-14 h-12 hover:bg-gray-100 transition"
@@ -186,6 +241,15 @@ function MapToolbar({
 
       {/* 도움말 모달 */}
       <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
+      {/* 길찾기 모달 */}
+      <RouteFinder
+        isVisible={showRouteFinder}
+        onClose={() => setShowRouteFinder(false)}
+        currentLocation={currentLocation}
+        destination={destination}
+        setDestination={setDestination}
+      />
     </div>
   );
 }

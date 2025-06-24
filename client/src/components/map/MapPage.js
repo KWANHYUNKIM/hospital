@@ -41,6 +41,8 @@ const MapPage = () => {
   const [selectedCluster, setSelectedCluster] = useState(null);
   const [infoWindowPosition, setInfoWindowPosition] = useState(null);
 
+  const [destination, setDestination] = useState(null);
+
   // 요약 데이터
   const getPharmacyUniqueId = (pharmacy) =>
     pharmacy.ykiho || `${pharmacy.name}_${pharmacy.lat}_${pharmacy.lng}`;
@@ -162,10 +164,12 @@ const MapPage = () => {
   const handleHospitalClick = (hospital) => {
     setSelectedHospitalId(getHospitalUniqueId(hospital));
     setSelectedInfo(hospital);
+    setDestination(hospital);
   };
   const handlePharmacyClick = (pharmacy) => {
     setSelectedPharmacyId(getPharmacyUniqueId(pharmacy));
     setSelectedInfo(pharmacy);
+    setDestination(pharmacy);
   };
   const handleSidebarClose = () => setSelectedInfo(null);
 
@@ -426,6 +430,8 @@ const MapPage = () => {
         map={map}
         onReset={handleReset}
         onSearch={handleSearchToggle}
+        destination={destination}
+        setDestination={setDestination}
       />
 
       <div className="flex flex-row flex-1 h-0">
