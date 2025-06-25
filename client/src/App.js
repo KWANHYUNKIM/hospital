@@ -48,6 +48,7 @@ import CategoryManagement from './pages/admin/CategoryManagement';
 import ChannelApprovalPage from './pages/admin/ChannelApprovalPage';
 import NewsDetailList from './components/news/NewsDetailList';
 import NewsEdit from './components/news/NewsEdit';
+import BusStationViewer from './pages/BusStationViewer';
 //import BigChatModal from './components/chat/BigChatModal';
 //import Jarvis from './components/chat/jarvis';
 
@@ -107,6 +108,7 @@ const AppContent = () => {
                   <Route path="/news" element={<NewsPage />} />
                   <Route path="/news/:id" element={<NewsDetailList />} />
                   <Route path="/news/edit/:id" element={<NewsEdit />} />
+                  <Route path="/bus-station-viewer" element={<BusStationViewer />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </div>

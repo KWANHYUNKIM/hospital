@@ -27,6 +27,10 @@ public class BusStationService {
         return repository.count();
     }
 
+    public BusStation getStationById(String stationId) {
+        return repository.findByStationId(stationId);
+    }
+
     public void saveAll(List<BusStation> stations) {
         repository.saveAll(stations);
     }

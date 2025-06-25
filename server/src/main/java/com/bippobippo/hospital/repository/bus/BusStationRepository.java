@@ -7,4 +7,5 @@ import java.util.List;
 public interface BusStationRepository extends MongoRepository<BusStation, String> {
     List<BusStation> findByCityCode(String cityCode);
     List<BusStation> findByStationNmContaining(String stationNm);
+    BusStation findByStationId(String stationId);
 } 

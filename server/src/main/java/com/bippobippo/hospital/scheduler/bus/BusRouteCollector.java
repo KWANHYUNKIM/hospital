@@ -84,15 +84,27 @@ public class BusRouteCollector {
                 }
                 
                 String xml = response.toString();
+                log.debug("도시 {} 페이지 {} API 응답: {}", cityCode, pageNo, xml);
                 
                 // 에러 응답 체크
                 if (xml.contains("SERVICE_KEY_IS_NOT_REGISTERED_ERROR") || 
-                    xml.contains("SERVICE ERROR")) {
+                    xml.contains("SERVICE ERROR") ||
+                    xml.contains("APPLICATION_ERROR") ||
+                    xml.contains("HTTP_ERROR")) {
                     log.warn("도시 {} API 호출 실패: {}", cityCode, xml);
                     return;
                 }
                 
                 Document doc = DocumentHelper.parseText(xml);
+                
+                // API 에러 체크
+                Node resultCodeNode = doc.selectSingleNode("//resultCode");
+                if (resultCodeNode != null && !"00".equals(resultCodeNode.getText())) {
+                    Node resultMsgNode = doc.selectSingleNode("//resultMsg");
+                    log.warn("도시 {} API 에러: {} - {}", cityCode, resultCodeNode.getText(), 
+                        resultMsgNode != null ? resultMsgNode.getText() : "알 수 없는 에러");
+                    return;
+                }
                 
                 // 전체 개수 확인
                 Node totalCountNode = doc.selectSingleNode("//totalCount");
@@ -110,7 +122,11 @@ public class BusRouteCollector {
                         .cityCode(cityCode)
                         .routeId(getText(item, "routeid"))
                         .routeNo(getText(item, "routeno"))
-                        .routeTp(getText(item, "routetype"))
+                        .routeTp(getText(item, "routetp"))
+                        .startNodeNm(getText(item, "startnodenm"))
+                        .endNodeNm(getText(item, "endnodenm"))
+                        .startVehicleTime(getText(item, "startvehicletime"))
+                        .endVehicleTime(getText(item, "endvehicletime"))
                         .updatedAt(new Date())
                         .build();
                     routes.add(route);
@@ -119,6 +135,8 @@ public class BusRouteCollector {
                 if (!routes.isEmpty()) {
                     busRouteService.saveAll(routes);
                     log.info("도시 {} 페이지 {} 노선 {}건 저장", cityCode, pageNo, routes.size());
+                } else {
+                    log.debug("도시 {} 페이지 {} 노선 데이터 없음", cityCode, pageNo);
                 }
                 
                 pageNo++;
@@ -162,19 +180,29 @@ public class BusRouteCollector {
                     response.append(line);
                 }
             }
-            String text = response.toString();
-            log.info("도시코드 API 응답: {}", text);
+            String xml = response.toString();
+            log.info("도시코드 API 응답: {}", xml);
             
-            // 응답이 "00NORMAL SERVICE.12세종특별시21부산광역시..." 형태
-            // 정규식으로 도시코드와 도시명을 추출
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d{2,5})([가-힣]+(?:시|군|도|특별시|광역시))");
-            java.util.regex.Matcher matcher = pattern.matcher(text);
+            // XML 파싱
+            Document doc = DocumentHelper.parseText(xml);
             
-            while (matcher.find()) {
-                String cityCode = matcher.group(1);
-                String cityName = matcher.group(2);
-                cities.add(new City(cityCode, cityName));
-                log.debug("도시 추가: {} - {}", cityCode, cityName);
+            // 에러 응답 체크
+            Node resultCodeNode = doc.selectSingleNode("//resultCode");
+            if (resultCodeNode != null && !"00".equals(resultCodeNode.getText())) {
+                Node resultMsgNode = doc.selectSingleNode("//resultMsg");
+                log.error("도시코드 API 에러: {} - {}", resultCodeNode.getText(), 
+                    resultMsgNode != null ? resultMsgNode.getText() : "알 수 없는 에러");
+                return cities;
+            }
+            
+            List<Node> items = doc.selectNodes("//item");
+            for (Node item : items) {
+                String code = getText(item, "citycode");
+                String name = getText(item, "cityname");
+                if (code != null && name != null) {
+                    cities.add(new City(code, name));
+                    log.debug("도시 추가: {} - {}", code, name);
+                }
             }
             
             log.info("총 {}개의 도시코드를 수집했습니다.", cities.size());

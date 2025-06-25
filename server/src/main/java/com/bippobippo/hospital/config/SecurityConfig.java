@@ -70,6 +70,9 @@ public class SecurityConfig {
             .antMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
             .antMatchers("/api/boards/**").authenticated() // POST, PUT, DELETE 포함
 
+            // 버스 API - 모든 요청 허용 (노선 수집 등)
+            .antMatchers("/api/bus/**").permitAll()
+
             // 기타 모든 API의 GET 요청 허용
             .antMatchers(HttpMethod.GET, "/api/**").permitAll()
 
