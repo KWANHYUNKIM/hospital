@@ -34,4 +34,12 @@ public class BusRouteStationService {
     public long getCount() {
         return repository.count();
     }
+
+    public long getRouteStationCount() {
+        return repository.count();
+    }
+
+    public List<BusRouteStation> getRoutesByStationName(String stationName) {
+        return repository.findByStationNmContaining(stationName);
+    }
 } 

@@ -88,4 +88,15 @@ elasticsearch:
 
 openai:
   api:
-    key: ${OPENAI_API_KEY:your-api-key-here} 
+    key: ${OPENAI_API_KEY:your-api-key-here}
+
+# API 호출 제한 관리 설정
+api:
+  rate-limit:
+    batch-size: 5                    # 한 번에 처리할 노선 수
+    delay-between-batches: 3000      # 배치 간 대기 시간 (밀리초)
+    delay-after-rate-limit: 15000    # 호출 제한 후 대기 시간 (밀리초)
+    max-rate-limit-retries: 3        # 최대 재시도 횟수
+    delay-between-requests: 200      # 요청 간 대기 시간 (밀리초)
+    max-rate-limit-count: 3          # 최대 호출 제한 발생 횟수
+    extended-wait-time: 60000        # 연속 호출 제한 시 대기 시간 (밀리초) 

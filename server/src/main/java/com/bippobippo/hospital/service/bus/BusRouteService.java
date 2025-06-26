@@ -56,4 +56,8 @@ public class BusRouteService {
         repository.saveAll(toSave);
         repository.deleteAll(toDelete);
     }
+
+    public long getRouteCount() {
+        return repository.count();
+    }
 } 

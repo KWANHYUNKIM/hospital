@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.springframework.scheduling.annotation.Async;
 
 @Slf4j
 @Component
@@ -42,6 +43,64 @@ public class BusLocationScheduler {
 
     // 병렬 처리를 위한 스레드 풀 설정
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
+    
+    // API 호출 제한 관리 설정
+    @Value("${api.rate-limit.batch-size:5}")
+    private int batchSize;
+    
+    @Value("${api.rate-limit.delay-between-batches:3000}")
+    private int delayBetweenBatches;
+    
+    @Value("${api.rate-limit.delay-after-rate-limit:15000}")
+    private int delayAfterRateLimit;
+    
+    @Value("${api.rate-limit.max-rate-limit-retries:3}")
+    private int maxRateLimitRetries;
+    
+    @Value("${api.rate-limit.delay-between-requests:200}")
+    private int delayBetweenRequests;
+    
+    @Value("${api.rate-limit.max-rate-limit-count:3}")
+    private int maxRateLimitCount;
+    
+    @Value("${api.rate-limit.extended-wait-time:60000}")
+    private int extendedWaitTime;
+    
+    // 시간대별 API 호출 제한 관리
+    private int getTimeBasedDelay() {
+        int hour = java.time.LocalTime.now().getHour();
+        
+        // 새벽 시간대 (0-6시): 더 빠른 처리
+        if (hour >= 0 && hour < 6) {
+            return delayBetweenRequests / 2;
+        }
+        // 출근 시간대 (7-9시): 더 느린 처리
+        else if (hour >= 7 && hour < 10) {
+            return delayBetweenRequests * 2;
+        }
+        // 퇴근 시간대 (17-19시): 더 느린 처리
+        else if (hour >= 17 && hour < 20) {
+            return delayBetweenRequests * 2;
+        }
+        // 일반 시간대: 기본 설정 사용
+        else {
+            return delayBetweenRequests;
+        }
+    }
+    
+    // API 호출 제한 후 지능적인 대기 시간 계산
+    private int getRateLimitDelay(int retryCount) {
+        int baseDelay = delayAfterRateLimit;
+        
+        // 재시도 횟수에 따라 지수적 증가 (1, 2, 4배)
+        int multiplier = (int) Math.pow(2, retryCount - 1);
+        
+        // 최대 5분까지만 대기
+        int maxDelay = 300000; // 5분
+        int calculatedDelay = baseDelay * multiplier;
+        
+        return Math.min(calculatedDelay, maxDelay);
+    }
     
     // 배치 처리를 위한 메서드 추가
     private void fetchBusLocationsByBatch(List<BusRoute> routes, int batchSize) {
@@ -100,10 +159,100 @@ public class BusLocationScheduler {
         fetchAllBusLocationsInternal();
     }
     
-    // 테스트용 - 즉시 실행 가능
+    // 배치 처리로 모든 노선의 버스 위치 수집
+    @Async
     public void fetchAllBusLocationsNow() {
-        log.info("전국 버스 위치 즉시 수집 시작");
-        fetchAllBusLocationsInternal();
+        log.info("전국 버스 위치 수집 시작");
+        
+        try {
+            List<BusRoute> allRoutes = busRouteService.getAllRoutes();
+            log.info("총 {}개 노선에 대해 버스 위치 수집 시작", allRoutes.size());
+            
+            // API 호출 제한 관리를 위한 변수들
+            int successCount = 0;
+            int failureCount = 0;
+            int rateLimitCount = 0;
+            
+            for (int i = 0; i < allRoutes.size(); i += batchSize) {
+                int endIndex = Math.min(i + batchSize, allRoutes.size());
+                List<BusRoute> batch = allRoutes.subList(i, endIndex);
+                
+                log.info("배치 처리 중: {}/{} (노선 {}개)", endIndex, allRoutes.size(), batch.size());
+                
+                for (BusRoute route : batch) {
+                    int retryCount = 0;
+                    boolean processed = false;
+                    
+                    while (!processed && retryCount < maxRateLimitRetries) {
+                        try {
+                            // API 호출 제한 체크
+                            if (rateLimitCount > maxRateLimitCount) {
+                                log.warn("API 호출 제한이 많이 발생했습니다. {}초 대기 후 재시도합니다.", extendedWaitTime / 1000);
+                                Thread.sleep(extendedWaitTime); // 설정된 시간만큼 대기
+                                rateLimitCount = 0; // 카운터 리셋
+                            }
+                            
+                            fetchBusLocationsByRoute(route);
+                            successCount++;
+                            processed = true;
+                            
+                            // 각 노선 처리 후 짧은 대기 (API 호출 제한 방지)
+                            Thread.sleep(getTimeBasedDelay());
+                            
+                        } catch (InterruptedException e) {
+                            log.error("버스 위치 수집이 중단되었습니다: {}", e.getMessage());
+                            Thread.currentThread().interrupt();
+                            return;
+                        } catch (Exception e) {
+                            String errorMsg = e.getMessage();
+                            
+                            // API 호출 제한 오류 감지
+                            if (errorMsg != null && errorMsg.contains("LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR")) {
+                                rateLimitCount++;
+                                retryCount++;
+                                log.warn("노선 {} API 호출 제한 발생 ({}번째, 재시도 {}/{}). 잠시 대기합니다.", 
+                                    route.getRouteId(), rateLimitCount, retryCount, maxRateLimitRetries);
+                                
+                                try {
+                                    Thread.sleep(getRateLimitDelay(retryCount)); // 재시도할수록 더 오래 대기
+                                } catch (InterruptedException ie) {
+                                    Thread.currentThread().interrupt();
+                                    return;
+                                }
+                            } else {
+                                log.error("노선 {} 버스 위치 수집 실패: {}", route.getRouteId(), errorMsg);
+                                failureCount++;
+                                processed = true; // 다른 오류는 재시도하지 않음
+                            }
+                        }
+                    }
+                    
+                    // 최대 재시도 횟수를 초과한 경우
+                    if (!processed) {
+                        log.error("노선 {} 최대 재시도 횟수 초과로 처리 중단", route.getRouteId());
+                        failureCount++;
+                    }
+                }
+                
+                // 배치 처리 후 대기 (API 호출 제한 방지)
+                if (endIndex < allRoutes.size()) {
+                    try {
+                        log.info("배치 완료. {}초 대기 후 다음 배치 처리...", delayBetweenBatches / 1000);
+                        Thread.sleep(delayBetweenBatches);
+                    } catch (InterruptedException e) {
+                        log.error("배치 처리 대기 중 중단되었습니다: {}", e.getMessage());
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                }
+            }
+            
+            log.info("전국 버스 위치 수집 완료 - 성공: {}, 실패: {}, 호출 제한: {}회", 
+                successCount, failureCount, rateLimitCount);
+            
+        } catch (Exception e) {
+            log.error("전국 버스 위치 수집 중 오류 발생: {}", e.getMessage(), e);
+        }
     }
     
     private void fetchAllBusLocationsInternal() {
@@ -220,7 +369,15 @@ public class BusLocationScheduler {
                     // 새로운 버스 운행 시작 또는 기존 운행 추적
                     busRouteTrackingService.startNewRouteTracking(loc, route.getRouteNo());
                     
-                    // 정류장 방문 기록 추가 (nodeId가 있으면)
+                    // GPS 기반 정류장 방문 감지 (개선된 방식)
+                    busRouteTrackingService.detectStationVisitByGPS(
+                        loc.getVehicleNo(),
+                        loc.getGpsLat(),
+                        loc.getGpsLong(),
+                        loc.getRouteId()
+                    );
+                    
+                    // 기존 방식 (nodeId 기반)도 유지 (백업용)
                     if (loc.getNodeId() != null && !loc.getNodeId().isEmpty()) {
                         busRouteTrackingService.addStationVisit(
                             loc.getVehicleNo(),

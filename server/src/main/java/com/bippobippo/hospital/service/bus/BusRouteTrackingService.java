@@ -17,15 +17,25 @@ public class BusRouteTrackingService {
     private final BusRouteTrackingRepository repository;
     private final BusRouteStationService busRouteStationService;
     private final BusStationService busStationService;
+    private final BusRouteService busRouteService;
     
-    // 새로운 버스 운행 시작
+    // 새로운 버스 운행 시작 (왕복 운행 고려)
     public BusRouteTracking startNewRouteTracking(BusLocation busLocation, String routeNo) {
         try {
             // 기존 운행 중인 같은 버스가 있는지 확인
             Optional<BusRouteTracking> existingTracking = repository.findByVehicleNoAndIsActiveTrue(busLocation.getVehicleNo());
             if (existingTracking.isPresent()) {
-                log.debug("버스 {}는 이미 운행 중입니다.", busLocation.getVehicleNo());
-                return existingTracking.get();
+                BusRouteTracking existing = existingTracking.get();
+                
+                // 왕복 운행 감지: 정류장 순서가 역방향으로 바뀌면 새로운 운행으로 판단
+                if (isReverseDirection(busLocation, existing)) {
+                    log.info("버스 {} 왕복 운행 감지 - 새로운 운행 시작", busLocation.getVehicleNo());
+                    // 기존 운행 종료
+                    endRouteTracking(busLocation.getVehicleNo());
+                } else {
+                    log.debug("버스 {}는 이미 운행 중입니다.", busLocation.getVehicleNo());
+                    return existing;
+                }
             }
             
             // 새로운 운행 기록 생성
@@ -43,7 +53,7 @@ public class BusRouteTrackingService {
                 .build();
             
             BusRouteTracking saved = repository.save(tracking);
-            log.info("버스 {} 새로운 운행 시작: 노선 {}", busLocation.getVehicleNo(), routeNo);
+            log.info("버스 {} 새로운 운행 시작: 노선 {} (왕복 운행 고려)", busLocation.getVehicleNo(), routeNo);
             return saved;
             
         } catch (Exception e) {
@@ -52,7 +62,184 @@ public class BusRouteTrackingService {
         }
     }
     
-    // 정류장 방문 기록 추가 (중복 방지)
+    // 왕복 운행 방향 감지 (개선된 버전 - startNodeNm, endNodeNm 활용)
+    private boolean isReverseDirection(BusLocation busLocation, BusRouteTracking existingTracking) {
+        try {
+            // 노선 정보 조회
+            BusRoute route = busRouteService.getRouteByRouteId(busLocation.getRouteId());
+            if (route == null) {
+                log.warn("노선 정보를 찾을 수 없습니다: {}", busLocation.getRouteId());
+                return false;
+            }
+            
+            String startNodeNm = route.getStartNodeNm();
+            String endNodeNm = route.getEndNodeNm();
+            
+            // 기존 방문 기록이 2개 이상 있어야 방향 감지 가능
+            if (existingTracking.getStationVisits().size() < 2) {
+                return false;
+            }
+            
+            // 첫 번째 방문 정류장과 마지막 방문 정류장 확인
+            String firstVisitedStation = existingTracking.getStationVisits().get(0).getStationNm();
+            String lastVisitedStation = existingTracking.getStationVisits().get(existingTracking.getStationVisits().size() - 1).getStationNm();
+            
+            // 현재 버스 위치의 정류장 찾기
+            String currentStation = getCurrentStationName(busLocation, busLocation.getRouteId());
+            
+            log.debug("버스 {} 운행 방향 분석: 시작={}, 종료={}, 첫방문={}, 마지막방문={}, 현재={}", 
+                busLocation.getVehicleNo(), startNodeNm, endNodeNm, firstVisitedStation, lastVisitedStation, currentStation);
+            
+            // 케이스 1: 출발지와 도착지가 같은 경우 (왕복 노선)
+            if (startNodeNm.equals(endNodeNm)) {
+                return detectRoundTripDirection(firstVisitedStation, lastVisitedStation, currentStation, startNodeNm);
+            }
+            
+            // 케이스 2: 출발지와 도착지가 다른 경우 (단방향 노선)
+            return detectOneWayDirection(firstVisitedStation, lastVisitedStation, currentStation, startNodeNm, endNodeNm);
+            
+        } catch (Exception e) {
+            log.error("왕복 운행 방향 감지 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    // 왕복 노선 방향 감지 (출발지=도착지)
+    private boolean detectRoundTripDirection(String firstVisited, String lastVisited, String current, String startEndNode) {
+        // 첫 번째 방문이 시작/종료 정류장이면 순방향
+        if (firstVisited.equals(startEndNode)) {
+            // 현재 위치가 마지막 방문보다 이전 정류장이면 역방향
+            return isStationBefore(current, lastVisited);
+        }
+        
+        // 첫 번째 방문이 시작/종료 정류장이 아니면, 현재 위치가 첫 방문보다 이전이면 역방향
+        return isStationBefore(current, firstVisited);
+    }
+    
+    // 단방향 노선 방향 감지 (출발지≠도착지)
+    private boolean detectOneWayDirection(String firstVisited, String lastVisited, String current, String startNode, String endNode) {
+        // 첫 번째 방문이 출발지면 순방향
+        if (firstVisited.equals(startNode)) {
+            // 현재 위치가 마지막 방문보다 이전 정류장이면 역방향
+            return isStationBefore(current, lastVisited);
+        }
+        
+        // 첫 번째 방문이 도착지면 역방향
+        if (firstVisited.equals(endNode)) {
+            // 현재 위치가 마지막 방문보다 이후 정류장이면 순방향으로 변경
+            return isStationAfter(current, lastVisited);
+        }
+        
+        // 첫 번째 방문이 중간 정류장인 경우, 현재 위치로 판단
+        return isStationBefore(current, firstVisited);
+    }
+    
+    // 정류장 A가 정류장 B보다 이전인지 확인 (정류장 순서 기반)
+    private boolean isStationBefore(String stationA, String stationB) {
+        try {
+            // 정류장 순서 정보를 활용한 정확한 비교
+            int seqA = getStationSeqByName(stationA);
+            int seqB = getStationSeqByName(stationB);
+            
+            if (seqA > 0 && seqB > 0) {
+                return seqA < seqB;
+            }
+            
+            // 순서 정보가 없으면 이름 비교 (임시)
+            return stationA.compareTo(stationB) < 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    // 정류장명으로 순서 조회
+    private int getStationSeqByName(String stationName) {
+        try {
+            // TODO: 정류장명으로 순서를 조회하는 로직 구현
+            // 현재는 임시로 0 반환
+            return 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+    
+    // 정류장 A가 정류장 B보다 이후인지 확인
+    private boolean isStationAfter(String stationA, String stationB) {
+        return !isStationBefore(stationA, stationB) && !stationA.equals(stationB);
+    }
+    
+    // 현재 버스 위치의 정류장명 가져오기
+    private String getCurrentStationName(BusLocation busLocation, String routeId) {
+        try {
+            // nodeNm이 있으면 사용
+            if (busLocation.getNodeNm() != null && !busLocation.getNodeNm().isEmpty()) {
+                return busLocation.getNodeNm();
+            }
+            
+            // GPS 기반으로 가장 가까운 정류장 찾기
+            List<BusRouteStation> routeStations = busRouteStationService.getStationsByRoute(routeId);
+            if (routeStations.isEmpty()) {
+                return "UNKNOWN";
+            }
+            
+            double minDistance = Double.MAX_VALUE;
+            String nearestStation = "UNKNOWN";
+            
+            for (BusRouteStation routeStation : routeStations) {
+                double stationLat = Double.parseDouble(routeStation.getGpsY());
+                double stationLong = Double.parseDouble(routeStation.getGpsX());
+                
+                double distance = calculateDistance(busLocation.getGpsLat(), busLocation.getGpsLong(), 
+                                                 stationLat, stationLong);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestStation = routeStation.getStationNm();
+                }
+            }
+            
+            return nearestStation;
+            
+        } catch (Exception e) {
+            log.error("현재 정류장명 조회 실패: {}", e.getMessage());
+            return "UNKNOWN";
+        }
+    }
+    
+    // 버스 현재 정류장 순서 추정
+    private int getBusCurrentStationSeq(BusLocation busLocation, String routeId) {
+        try {
+            List<BusRouteStation> routeStations = busRouteStationService.getStationsByRoute(routeId);
+            if (routeStations.isEmpty()) {
+                return 0;
+            }
+            
+            // 버스 위치와 가장 가까운 정류장 찾기
+            double minDistance = Double.MAX_VALUE;
+            int closestSeq = 0;
+            
+            for (BusRouteStation routeStation : routeStations) {
+                double stationLat = Double.parseDouble(routeStation.getGpsY());
+                double stationLong = Double.parseDouble(routeStation.getGpsX());
+                
+                double distance = calculateDistance(busLocation.getGpsLat(), busLocation.getGpsLong(), 
+                                                 stationLat, stationLong);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestSeq = routeStation.getStationSeq();
+                }
+            }
+            
+            return closestSeq;
+            
+        } catch (Exception e) {
+            log.error("버스 현재 정류장 순서 추정 실패: {}", e.getMessage());
+            return 0;
+        }
+    }
+    
+    // 정류장 방문 기록 추가 (개선된 로직)
     public boolean addStationVisit(String vehicleNo, String stationId, String stationNm, int stationSeq, 
                                  double gpsLat, double gpsLong) {
         try {
@@ -64,13 +251,24 @@ public class BusRouteTrackingService {
             
             BusRouteTracking tracking = trackingOpt.get();
             
-            // 이미 방문한 정류장인지 확인
-            boolean alreadyVisited = tracking.getStationVisits().stream()
-                .anyMatch(visit -> visit.getStationId().equals(stationId));
+            // 최근 방문 기록 확인 (5분 이내 같은 정류장 방문 방지)
+            Date fiveMinutesAgo = new Date(System.currentTimeMillis() - 5 * 60 * 1000);
+            boolean recentVisit = tracking.getStationVisits().stream()
+                .anyMatch(visit -> visit.getStationId().equals(stationId) && 
+                                 visit.getArrivalTime().after(fiveMinutesAgo));
             
-            if (alreadyVisited) {
-                log.debug("버스 {}가 이미 정류장 {}을 방문했습니다.", vehicleNo, stationNm);
+            if (recentVisit) {
+                log.debug("버스 {}가 최근에 정류장 {}을 방문했습니다. (5분 이내)", vehicleNo, stationNm);
                 return false;
+            }
+            
+            // 정류장 순서 검증 (이전 정류장보다 순서가 증가해야 함)
+            if (!tracking.getStationVisits().isEmpty()) {
+                int lastSeq = tracking.getStationVisits().get(tracking.getStationVisits().size() - 1).getStationSeq();
+                if (stationSeq <= lastSeq && stationSeq != 0) {
+                    log.debug("버스 {} 정류장 순서 오류: 이전 {} -> 현재 {}", vehicleNo, lastSeq, stationSeq);
+                    // 순서가 맞지 않아도 기록은 추가 (왕복 노선 고려)
+                }
             }
             
             // 새로운 정류장 방문 기록 추가
@@ -91,11 +289,57 @@ public class BusRouteTrackingService {
             updateTrackingStatistics(tracking);
             
             repository.save(tracking);
-            log.debug("버스 {} 정류장 {} 방문 기록 추가", vehicleNo, stationNm);
+            log.info("버스 {} 정류장 {} 방문 기록 추가 (순서: {})", vehicleNo, stationNm, stationSeq);
             return true;
             
         } catch (Exception e) {
             log.error("정류장 방문 기록 추가 실패: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    // GPS 기반 정류장 방문 감지 (개선된 버전)
+    public boolean detectStationVisitByGPS(String vehicleNo, double busLat, double busLong, String routeId) {
+        try {
+            // 해당 노선의 정류장 정보 조회
+            List<BusRouteStation> routeStations = busRouteStationService.getStationsByRoute(routeId);
+            if (routeStations.isEmpty()) {
+                return false;
+            }
+            
+            // 버스 위치에서 가장 가까운 정류장 찾기
+            BusRouteStation nearestStation = null;
+            double minDistance = Double.MAX_VALUE;
+            
+            for (BusRouteStation routeStation : routeStations) {
+                double stationLat = Double.parseDouble(routeStation.getGpsY());
+                double stationLong = Double.parseDouble(routeStation.getGpsX());
+                
+                double distance = calculateDistance(busLat, busLong, stationLat, stationLong);
+                
+                // 200m 이내에 있는 정류장 중 가장 가까운 것 선택
+                if (distance < 0.2 && distance < minDistance) {
+                    minDistance = distance;
+                    nearestStation = routeStation;
+                }
+            }
+            
+            if (nearestStation != null) {
+                // 정류장 방문 기록 추가
+                return addStationVisit(
+                    vehicleNo,
+                    nearestStation.getStationId(),
+                    nearestStation.getStationNm(),
+                    nearestStation.getStationSeq(),
+                    Double.parseDouble(nearestStation.getGpsY()),
+                    Double.parseDouble(nearestStation.getGpsX())
+                );
+            }
+            
+            return false;
+            
+        } catch (Exception e) {
+            log.error("GPS 기반 정류장 방문 감지 실패: {}", e.getMessage(), e);
             return false;
         }
     }

@@ -26,4 +26,8 @@ public class BusLocationService {
     public void saveAll(List<BusLocation> locations) {
         repository.saveAll(locations);
     }
+
+    public long getLocationCount() {
+        return repository.count();
+    }
 } 

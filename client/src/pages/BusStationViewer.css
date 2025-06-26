@@ -204,10 +204,8 @@
     grid-template-columns: 1fr;
   }
   
-  .station-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .trackings-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -350,6 +348,81 @@
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #e9ecef;
+}
+
+/* 운행 방향 표시 스타일 */
+.route-direction {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.direction-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.route-basic-info {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+  padding: 5px 10px;
+  background: #ecf0f1;
+  border-radius: 6px;
+  border: 1px solid #bdc3c7;
+}
+
+.direction-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.direction-indicator.increasing {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border: 1px solid #b1dfbb;
+}
+
+.direction-indicator.decreasing {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border: 1px solid #f1b0b7;
+}
+
+.direction-detail {
+  font-size: 12px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.route-endpoints {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.start-endpoint {
+  padding: 4px 8px;
+  background: #d4edda;
+  border-radius: 4px;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.end-endpoint {
+  padding: 4px 8px;
+  background: #f8d7da;
+  border-radius: 4px;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
 }
 
 .route-visualization h6 {
@@ -495,6 +568,34 @@
   border-radius: 10px;
   padding: 20px;
   margin-bottom: 30px;
+}
+
+.tracking-details h4 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+}
+
+.tracking-count {
+  text-align: center;
+  color: #27ae60;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #d4edda;
+  border-radius: 6px;
+  border: 1px solid #c3e6cb;
+}
+
+.no-trackings {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+  font-size: 18px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
 }
 
 .trackings-grid {
@@ -702,6 +803,58 @@
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
+/* 왕복 운행 통계 스타일 */
+.round-trip-stats {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+.round-trip-stats h5 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.round-trip-grid {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.direction-stat {
+  background: #f8f9fa;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.direction-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.direction-count {
+  background: #007bff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 14px;
+  min-width: 30px;
+  text-align: center;
+}
+
 .city-detailed-stats h5 {
   color: #2c3e50;
   margin-bottom: 15px;
@@ -773,4 +926,205 @@
 .metric-value {
   color: #2c3e50;
   font-weight: 600;
+}
+
+/* 뷰 모드 선택 섹션 */
+.view-mode-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.view-mode-section h4 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.view-mode-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.view-mode-btn {
+  padding: 10px 15px;
+  background: #ecf0f1;
+  color: #34495e;
+  border: 2px solid #bdc3c7;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.view-mode-btn:hover {
+  background: #d5dbdb;
+  border-color: #95a5a6;
+}
+
+.view-mode-btn.active {
+  background: #3498db;
+  color: white;
+  border-color: #2980b9;
+}
+
+.city-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.city-select {
+  padding: 8px 12px;
+  border: 2px solid #bdc3c7;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.city-select:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+/* 도착 예정 버스가 있는 정류장 컨테이너 */
+.stations-with-arrivals-container {
+  margin-bottom: 30px;
+}
+
+.stations-with-arrivals-container h3 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+/* 도착 예정 요약 정보 */
+.arrival-summary {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+
+.arrival-count, .next-arrival {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.arrival-count:last-child, .next-arrival:last-child {
+  margin-bottom: 0;
+}
+
+.count-label, .next-label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.count-value {
+  background: #3498db;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.next-time {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* 도착 예정 상세 정보 */
+.arrival-details {
+  margin-top: 15px;
+}
+
+.arrival-details h5 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.arrival-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.confidence-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.arrival-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.arrival-time {
+  color: #7f8c8d;
+}
+
+.estimated-minutes {
+  font-weight: bold;
+}
+
+/* 색상 클래스들 */
+.text-red-600 {
+  color: #e74c3c;
+}
+
+.text-orange-600 {
+  color: #e67e22;
+}
+
+.text-blue-600 {
+  color: #3498db;
+}
+
+.font-bold {
+  font-weight: bold;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.bg-green-100 {
+  background-color: #d4edda;
+}
+
+.text-green-800 {
+  color: #155724;
+}
+
+.bg-yellow-100 {
+  background-color: #fff3cd;
+}
+
+.text-yellow-800 {
+  color: #856404;
+}
+
+.bg-red-100 {
+  background-color: #f8d7da;
+}
+
+.text-red-800 {
+  color: #721c24;
 } 

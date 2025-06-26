@@ -33,11 +33,36 @@ public class BusArrivalPredictionService {
                 return predictions;
             }
             
+            log.debug("정류장 정보 조회 성공: {} ({})", station.getStationNm(), stationId);
+            
             // 2. 해당 정류장을 경유하는 노선들 조회
             List<BusRouteStation> routeStations = busRouteStationService.getRoutesByStation(stationId);
+            
+            // 디버깅을 위한 상세 정보 로깅
+            log.debug("정류장 {} 경유 노선 조회 결과: {}개", stationId, routeStations.size());
+            
             if (routeStations.isEmpty()) {
-                log.debug("정류장 {}을 경유하는 노선이 없습니다.", stationId);
-                return predictions;
+                // 대안: 정류장명으로 검색해보기
+                log.debug("정류장 {}을 경유하는 노선이 없습니다. 정류장명으로 재검색 시도...", stationId);
+                
+                // 정류장명으로 노선 검색 시도
+                List<BusRouteStation> alternativeRouteStations = busRouteStationService.getRoutesByStationName(station.getStationNm());
+                if (!alternativeRouteStations.isEmpty()) {
+                    log.info("정류장명으로 {}개 노선 발견: {}", alternativeRouteStations.size(), station.getStationNm());
+                    routeStations = alternativeRouteStations;
+                } else {
+                    log.debug("정류장명으로도 노선을 찾을 수 없습니다: {}", station.getStationNm());
+                    
+                    // 추가 디버깅: 전체 노선과 정류장 데이터 상태 확인
+                    long totalRoutes = busRouteService.getRouteCount();
+                    long totalStations = busStationService.getStationCount();
+                    long totalRouteStations = busRouteStationService.getRouteStationCount();
+                    
+                    log.info("데이터베이스 상태 - 노선: {}개, 정류장: {}개, 노선별정류장: {}개", 
+                        totalRoutes, totalStations, totalRouteStations);
+                    
+                    return predictions;
+                }
             }
             
             log.debug("정류장 {}을 경유하는 {}개 노선 발견", stationId, routeStations.size());

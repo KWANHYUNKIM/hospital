@@ -9,4 +9,5 @@ public interface BusRouteStationRepository extends MongoRepository<BusRouteStati
     List<BusRouteStation> findByStationId(String stationId);
     List<BusRouteStation> findByCityCode(String cityCode);
     List<BusRouteStation> findByRouteIdAndStationId(String routeId, String stationId);
+    List<BusRouteStation> findByStationNmContaining(String stationName);
 } 

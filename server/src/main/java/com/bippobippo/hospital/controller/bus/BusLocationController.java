@@ -9,28 +9,56 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/bus")
+@RequestMapping("/api/bus/locations")
 @RequiredArgsConstructor
 public class BusLocationController {
     private final BusLocationService busLocationService;
     private final BusLocationScheduler busLocationScheduler;
 
-    @GetMapping("/locations")
-    public List<BusLocation> getBusLocations(@RequestParam String routeId) {
+    @GetMapping
+    public List<BusLocation> getAllBusLocations() {
+        return busLocationService.getAllBusLocations();
+    }
+
+    @GetMapping("/route/{routeId}")
+    public List<BusLocation> getBusLocationsByRoute(@PathVariable String routeId) {
         return busLocationService.getBusLocations(routeId);
     }
 
-    @GetMapping("/locations/city/{cityCode}")
+    @GetMapping("/city/{cityCode}")
     public List<BusLocation> getBusLocationsByCity(@PathVariable String cityCode) {
         return busLocationService.getBusLocationsByCity(cityCode);
     }
 
-    @GetMapping("/locations/all")
-    public List<BusLocation> getAllBusLocations() {
-        return busLocationService.getAllBusLocations();
+    @GetMapping("/stats")
+    public Map<String, Object> getBusLocationStats() {
+        List<BusLocation> allLocations = busLocationService.getAllBusLocations();
+        
+        return Map.of(
+            "totalBuses", allLocations.size(),
+            "timestamp", new java.util.Date(),
+            "message", "현재 " + allLocations.size() + "대의 버스가 운행 중입니다."
+        );
     }
-    
-    @PostMapping("/locations/collect")
+
+    @GetMapping("/route-stats")
+    public Map<String, Object> getRouteStats() {
+        List<BusLocation> allLocations = busLocationService.getAllBusLocations();
+        
+        Map<String, Long> routeStats = allLocations.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                BusLocation::getRouteId, 
+                java.util.stream.Collectors.counting()
+            ));
+        
+        return Map.of(
+            "totalBuses", allLocations.size(),
+            "routeStats", routeStats,
+            "timestamp", new java.util.Date()
+        );
+    }
+
+    @PostMapping("/collect")
     public Map<String, String> collectBusLocations() {
         try {
             busLocationScheduler.fetchAllBusLocationsNow();
