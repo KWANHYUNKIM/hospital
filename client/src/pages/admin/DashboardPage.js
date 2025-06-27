@@ -79,6 +79,13 @@ const DashboardPage = () => {
       color: 'bg-blue-500'
     },
     {
+      title: '의사 권한 승인',
+      description: '의사 권한 요청을 승인/거부합니다.',
+      icon: '👨‍⚕️',
+      path: '/admin/doctor-approval',
+      color: 'bg-indigo-500'
+    },
+    {
       title: 'CORS 관리',
       description: 'CORS 설정을 관리합니다.',
       icon: '🔒',

@@ -153,7 +153,7 @@ public class BusLocationScheduler {
     }
 
     // 2분마다 실행 (API 제한 회피를 위해 주기 늘림)
-    @Scheduled(fixedRate = 120000)
+    // @Scheduled(fixedRate = 120000)
     public void fetchAllBusLocations() {
         log.info("전국 버스 위치 수집 시작");
         fetchAllBusLocationsInternal();

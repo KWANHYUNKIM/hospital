@@ -29,7 +29,7 @@ public class BusRouteStationCollector {
     private String serviceKey;
 
     // 하루에 한 번 실행 (새벽 4시)
-    @Scheduled(cron = "0 0 4 * * ?")
+    // @Scheduled(cron = "0 0 4 * * ?")
     public void collectAllRouteStations() {
         log.info("전국 노선별 정류장 정보 수집 시작");
         collectAllRouteStationsInternal();

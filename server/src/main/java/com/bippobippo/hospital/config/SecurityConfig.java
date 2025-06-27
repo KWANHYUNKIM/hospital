@@ -58,6 +58,11 @@ public class SecurityConfig {
 
             .antMatchers("/api/admin/**").hasRole("ADMIN")
 
+            // 의사 권한 관련 API
+            .antMatchers("/api/doctor-approval/request").authenticated()
+            .antMatchers("/api/doctor-approval/my-requests").authenticated()
+            .antMatchers("/api/doctor-approval/admin/**").hasRole("ADMIN")
+
             // 채널 API
             .antMatchers(HttpMethod.GET, "/api/channels/**").permitAll()
             .antMatchers("/api/channels/**").hasRole("ADMIN")

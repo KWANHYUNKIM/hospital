@@ -21,7 +21,7 @@ public class BusStationRouteCollector {
     private final BusStationRouteService busStationRouteService;
     
     // 하루에 한 번 실행 (새벽 5시)
-    @Scheduled(cron = "0 0 5 * * ?")
+    // @Scheduled(cron = "0 0 5 * * ?")
     public void generateStationRoutes() {
         log.info("정류장별 정차 버스 정보 생성 시작");
         generateStationRoutesInternal();

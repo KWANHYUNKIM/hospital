@@ -29,7 +29,7 @@ public class BusRouteCollector {
     private String cities;
 
     // 하루에 한 번 실행 (새벽 3시)
-    @Scheduled(cron = "0 0 3 * * ?")
+    // @Scheduled(cron = "0 0 3 * * ?")
     public void collectAllBusRoutes() {
         log.info("전국 버스 노선 정보 수집 시작");
         collectAllBusRoutesInternal();

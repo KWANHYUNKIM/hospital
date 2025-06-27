@@ -30,6 +30,7 @@ import NaverCallback from './components/auth/NaverCallback';
 import KakaoCallback from './components/auth/KakaoCallback';
 import GoogleCallback from './components/auth/GoogleCallback';
 import ProfilePage from './pages/profile/ProfilePage';
+import DoctorApprovalRequestPage from './pages/profile/DoctorApprovalRequestPage';
 import EditBoardPage from './pages/community/EditBoardPage';
 import CategoryTypeManagementPage from './pages/admin/CategoryTypeManagementPage';
 import NursingHospitalList from './components/nursing/NursingHospitalList';
@@ -46,6 +47,7 @@ import NewsManagement from './pages/admin/NewsManagement';
 import NewsForm from './pages/admin/NewsForm';
 import CategoryManagement from './pages/admin/CategoryManagement';
 import ChannelApprovalPage from './pages/admin/ChannelApprovalPage';
+import DoctorApprovalPage from './pages/admin/DoctorApprovalPage';
 import NewsDetailList from './components/news/NewsDetailList';
 import NewsEdit from './components/news/NewsEdit';
 import BusStationViewer from './pages/BusStationViewer';
@@ -84,6 +86,7 @@ const AppContent = () => {
                   <Route path="/admin/news/edit/:id" element={<AdminRoute><NewsForm /></AdminRoute>} />
                   <Route path="/admin/news/categories" element={<CategoryManagement />} />
                   <Route path="/admin/channels/approval" element={<ChannelApprovalPage />} />
+                  <Route path="/admin/doctor-approval" element={<AdminRoute><DoctorApprovalPage /></AdminRoute>} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -100,6 +103,7 @@ const AppContent = () => {
                   <Route path="/community/boards/:id" element={<BoardDetail />} />
                   <Route path="/community/boards/edit/:id" element={<EditBoardPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/profile/doctor-approval" element={<DoctorApprovalRequestPage />} />
                   <Route path="/auth/naver/callback" element={<NaverCallback />} />
                   <Route path="/auth/google/callback" element={<GoogleCallback />} />
                   <Route path="/auth/kakao/callback" element={<KakaoCallback />} />

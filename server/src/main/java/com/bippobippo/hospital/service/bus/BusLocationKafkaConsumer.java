@@ -22,7 +22,7 @@ public class BusLocationKafkaConsumer {
     private final BusLocationWebSocketHandler webSocketHandler;
     
     // 원본 버스 위치 데이터 소비
-    @KafkaListener(topics = "bus-location-raw", groupId = "bus-location-processor")
+    // @KafkaListener(topics = "bus-location-raw", groupId = "bus-location-processor")
     public void consumeBusLocation(
             @Payload BusLocation location,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
@@ -50,7 +50,7 @@ public class BusLocationKafkaConsumer {
     }
     
     // 가공된 버스 위치 데이터 소비 (예측, 집계 결과)
-    @KafkaListener(topics = "bus-location-processed", groupId = "bus-location-processed-consumer")
+    // @KafkaListener(topics = "bus-location-processed", groupId = "bus-location-processed-consumer")
     public void consumeProcessedBusLocation(
             @Payload Object processedData,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
