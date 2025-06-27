@@ -42,4 +42,8 @@ public class BusRouteStationService {
     public List<BusRouteStation> getRoutesByStationName(String stationName) {
         return repository.findByStationNmContaining(stationName);
     }
+
+    public List<BusRouteStation> getAllRouteStations() {
+        return repository.findAll();
+    }
 } 
