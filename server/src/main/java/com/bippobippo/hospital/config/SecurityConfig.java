@@ -78,6 +78,10 @@ public class SecurityConfig {
             // 버스 API - 모든 요청 허용 (노선 수집 등)
             .antMatchers("/api/bus/**").permitAll()
 
+            // 영업시간 수정 제안 API - 모든 사용자 허용
+            .antMatchers("/api/hospital/suggest-operating-time").permitAll()
+            .antMatchers("/api/hospital/suggestions/**").hasRole("ADMIN")
+
             // 기타 모든 API의 GET 요청 허용
             .antMatchers(HttpMethod.GET, "/api/**").permitAll()
 

@@ -3,12 +3,17 @@ package com.bippobippo.hospital.controller.admin;
 import com.bippobippo.hospital.dto.MessageResponse;
 import com.bippobippo.hospital.dto.request.admin.*;
 import com.bippobippo.hospital.dto.response.admin.*;
+import com.bippobippo.hospital.entity.OperatingTimeSuggestion;
 import com.bippobippo.hospital.service.admin.AdminService;
+import com.bippobippo.hospital.service.hospital.OperatingTimeSuggestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -16,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class AdminController {
 
     private final AdminService adminService;
+    private final OperatingTimeSuggestionService operatingTimeSuggestionService;
 
     @GetMapping("/dashboard/stats")
     public ResponseEntity<DashboardStatsResponse> getDashboardStats() {
@@ -86,5 +92,54 @@ public class AdminController {
     @DeleteMapping("/cors-configs/{id}")
     public ResponseEntity<MessageResponse> deleteCorsConfig(@PathVariable Long id) {
         return ResponseEntity.ok(adminService.deleteCorsConfig(id));
+    }
+
+    @GetMapping("/operating-time-suggestions")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OperatingTimeSuggestion>> getAllOperatingTimeSuggestions() {
+        return ResponseEntity.ok(operatingTimeSuggestionService.getAllSuggestions());
+    }
+
+    @GetMapping("/operating-time-suggestions/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OperatingTimeSuggestion>> getPendingOperatingTimeSuggestions() {
+        return ResponseEntity.ok(operatingTimeSuggestionService.getPendingSuggestions());
+    }
+
+    @PostMapping("/operating-time-suggestions/{suggestionId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> approveOperatingTimeSuggestion(@PathVariable Long suggestionId) {
+        try {
+            OperatingTimeSuggestion approvedSuggestion = operatingTimeSuggestionService.approveSuggestion(suggestionId);
+            return ResponseEntity.ok(Map.of(
+                "message", "영업시간 수정 제안이 승인되었습니다.",
+                "suggestionId", approvedSuggestion.getId(),
+                "status", approvedSuggestion.getStatus()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                "message", "제안 승인 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/operating-time-suggestions/{suggestionId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> rejectOperatingTimeSuggestion(
+            @PathVariable Long suggestionId,
+            @RequestBody Map<String, String> request) {
+        try {
+            String reason = request.get("reason");
+            OperatingTimeSuggestion rejectedSuggestion = operatingTimeSuggestionService.rejectSuggestion(suggestionId, reason);
+            return ResponseEntity.ok(Map.of(
+                "message", "영업시간 수정 제안이 거부되었습니다.",
+                "suggestionId", rejectedSuggestion.getId(),
+                "status", rejectedSuggestion.getStatus()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                "message", "제안 거부 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
     }
 } 

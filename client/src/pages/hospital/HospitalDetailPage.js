@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchHospitalDetail } from '../../service/hospitalApi';
 import { MdKeyboardArrowLeft } from 'react-icons/md';
+import OperatingTimeSuggestion from '../../components/hospital/OperatingTimeSuggestion';
 
 const HospitalDetailPage = () => {
   const { id } = useParams();
@@ -370,6 +371,15 @@ const HospitalDetailPage = () => {
                       <p className="font-medium">점심시간</p>
                       <p>{hospital.times?.lunchWeek || "알수 없음"}</p>
                     </div>
+                  </div>
+                  
+                  {/* 영업시간 수정 제안 */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <OperatingTimeSuggestion 
+                      hospitalId={hospital.ykiho}
+                      hospitalName={hospital.yadmNm}
+                      currentTimes={hospital.times}
+                    />
                   </div>
                 </div>
 
