@@ -1,14 +1,15 @@
 package com.bippobippo.hospital.entity.board;
 
 import javax.persistence.*;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "hospital_board_attachments")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class BoardAttachment {
     @Id
@@ -30,4 +31,12 @@ public class BoardAttachment {
 
     @Column(name = "mime_type")
     private String mimeType;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 } 

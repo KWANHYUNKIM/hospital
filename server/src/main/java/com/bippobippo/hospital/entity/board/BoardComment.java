@@ -46,6 +46,7 @@ public class BoardComment {
     private String status;
 
     @Column(name = "is_secret")
+    @Builder.Default
     private Boolean isSecret = false;
 
     @CreationTimestamp
@@ -57,9 +58,11 @@ public class BoardComment {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<CommentHospitalTag> hospitalTags = new ArrayList<>();
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<EntityTag> entityTags = new ArrayList<>();
 
     public void update(String comment) {

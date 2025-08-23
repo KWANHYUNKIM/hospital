@@ -52,7 +52,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-            .authorizeHttpRequests(auth -> auth
+            .authorizeRequests(auth -> auth
             // 관리자 전용 API
             .antMatchers("/api/auth/**").permitAll()
 

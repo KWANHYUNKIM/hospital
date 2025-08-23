@@ -13,11 +13,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 @Slf4j
-@Service
+// @Service
 @RequiredArgsConstructor
 public class GoogleCloudStorageServiceImpl implements GoogleCloudStorageService {
     
-    private final Storage storage;
+    // private final Storage storage;
 
     @Value("${gcs.bucket.name}")
     private String bucketName;
@@ -30,31 +30,21 @@ public class GoogleCloudStorageServiceImpl implements GoogleCloudStorageService 
 
     @Override
     public String uploadFile(MultipartFile file) {
-        return uploadFile(file, PROFILE_IMAGES_FOLDER);
+        // Google Cloud Storage 비활성화
+        log.warn("Google Cloud Storage가 비활성화되어 있습니다.");
+        return "storage_disabled";
     }
 
     public String uploadNewsImage(MultipartFile file) {
-        return uploadFile(file, NEWS_IMAGES_FOLDER);
+        // Google Cloud Storage 비활성화
+        log.warn("Google Cloud Storage가 비활성화되어 있습니다.");
+        return "storage_disabled";
     }
 
     private String uploadFile(MultipartFile file, String folder) {
-        try {
-            String fileName = generateFileName(file.getOriginalFilename());
-            String filePath = folder + fileName;
-            
-            BlobInfo blobInfo = storage.create(
-                BlobInfo.newBuilder(bucketName, filePath)
-                    .setContentType(file.getContentType())
-                    .build(),
-                file.getBytes()
-            );
-            
-            log.info("파일이 성공적으로 업로드되었습니다: {}", filePath);
-            return blobInfo.getMediaLink();
-        } catch (Exception e) {
-            log.error("파일 업로드 중 오류 발생", e);
-            throw new RuntimeException("파일 업로드에 실패했습니다.", e);
-        }
+        // Google Cloud Storage 비활성화
+        log.warn("Google Cloud Storage가 비활성화되어 있습니다.");
+        return "storage_disabled";
     }
 
     private String generateFileName(String originalFileName) {
@@ -64,26 +54,17 @@ public class GoogleCloudStorageServiceImpl implements GoogleCloudStorageService 
 
     @Override
     public void deleteFile(String fileName) {
-        deleteFile(fileName, PROFILE_IMAGES_FOLDER);
+        // Google Cloud Storage 비활성화
+        log.warn("Google Cloud Storage가 비활성화되어 있습니다.");
     }
 
     public void deleteNewsImage(String fileName) {
-        deleteFile(fileName, NEWS_IMAGES_FOLDER);
+        // Google Cloud Storage 비활성화
+        log.warn("Google Cloud Storage가 비활성화되어 있습니다.");
     }
 
     private void deleteFile(String fileName, String folder) {
-        try {
-            String filePath = folder + fileName;
-            BlobId blobId = BlobId.of(bucketName, filePath);
-            boolean deleted = storage.delete(blobId);
-            if (deleted) {
-                log.info("파일이 성공적으로 삭제되었습니다: {}", filePath);
-            } else {
-                log.warn("파일을 찾을 수 없습니다: {}", filePath);
-            }
-        } catch (Exception e) {
-            log.error("파일 삭제 중 오류 발생", e);
-            throw new RuntimeException("파일 삭제에 실패했습니다.", e);
-        }
+        // Google Cloud Storage 비활성화
+        log.warn("Google Cloud Storage가 비활성화되어 있습니다.");
     }
 } 

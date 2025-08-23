@@ -1,10 +1,11 @@
 package com.bippobippo.hospital.controller.search;
 
-import com.bippobippo.hospital.dto.request.search.PharmacySearchRequest;
-import com.bippobippo.hospital.dto.response.search.PharmacySearchResponse;
-import com.bippobippo.hospital.service.hospital.PharmacySearchService;
+import com.bippobippo.hospital.elasticsearch.service.PharmacySearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pharmacies")
@@ -14,7 +15,7 @@ public class PharmacySearchController {
     private final PharmacySearchService pharmacySearchService;
 
     @GetMapping
-    public PharmacySearchResponse searchPharmacies(
+    public Map<String, Object> searchPharmacies(
             @RequestParam(defaultValue = "1") String page,
             @RequestParam(defaultValue = "10") String limit,
             @RequestParam(required = false) String region,
@@ -24,17 +25,22 @@ public class PharmacySearchController {
             @RequestParam(required = false) Double y,
             @RequestParam(defaultValue = "10km") String distance) {
 
-        PharmacySearchRequest request = PharmacySearchRequest.builder()
-                .page(page)
-                .limit(limit)
-                .region(region)
-                .type(type)
-                .query(query)
-                .x(x)
-                .y(y)
-                .distance(distance)
-                .build();
+        Map<String, Object> searchParams = new HashMap<>();
+        searchParams.put("page", page);
+        searchParams.put("limit", limit);
+        searchParams.put("region", region);
+        searchParams.put("type", type);
+        searchParams.put("keyword", query);
+        searchParams.put("latitude", y);
+        searchParams.put("longitude", x);
+        searchParams.put("distance", distance);
 
-        return pharmacySearchService.searchPharmacies(request);
+        try {
+            return pharmacySearchService.searchPharmacies(searchParams);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "검색 중 오류가 발생했습니다: " + e.getMessage());
+            return errorResponse;
+        }
     }
 } 

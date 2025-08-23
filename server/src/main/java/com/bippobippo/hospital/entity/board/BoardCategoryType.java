@@ -1,7 +1,7 @@
 package com.bippobippo.hospital.entity.board;
 
 import javax.persistence.*;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "hospital_board_category_types")
-@Getter
+@Data
 @NoArgsConstructor
 public class BoardCategoryType {
     @Id
@@ -50,23 +50,4 @@ public class BoardCategoryType {
         updatedAt = LocalDateTime.now();
     }
 
-    public void setTypeName(String typeName) {
-        this.typeName = typeName;
-    }
-
-    public void setTypeCode(String typeCode) {
-        this.typeCode = typeCode;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setOrderSequence(Integer orderSequence) {
-        this.orderSequence = orderSequence;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
 } 

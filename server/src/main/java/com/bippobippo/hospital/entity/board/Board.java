@@ -2,9 +2,8 @@ package com.bippobippo.hospital.entity.board;
 
 import com.bippobippo.hospital.entity.user.User;
 import javax.persistence.*;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import lombok.Builder;
@@ -18,8 +17,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "hospital_board")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
@@ -46,18 +44,23 @@ public class Board {
     private Integer userId;
 
     @Column(nullable = false)
+    @Builder.Default
     private String status = "published";
 
     @Column(name = "is_notice")
+    @Builder.Default
     private Boolean isNotice = false;
 
-    @Column(name = "view_count", nullable = false)
+        @Column(name = "view_count", nullable = false)
+    @Builder.Default
     private Integer viewCount = 0;
-
+    
     @Column(name = "like_count")
+    @Builder.Default
     private Integer likeCount = 0;
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<BoardComment> comments = new HashSet<>();
 
     @ManyToMany
@@ -66,12 +69,15 @@ public class Board {
         joinColumns = @JoinColumn(name = "board_id"),
         inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
+    @Builder.Default
     private Set<BoardTag> tags = new HashSet<>();
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<BoardMetaField> metaFields = new HashSet<>();
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<BoardAttachment> attachments = new HashSet<>();
 
     @OneToOne(mappedBy = "board", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -93,32 +99,13 @@ public class Board {
         if (likeCount == null) likeCount = 0;
     }
 
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
 
-    public void incrementViewCount() {
-        this.viewCount++;
-    }
-
-    public void incrementLikeCount() {
-        this.likeCount++;
-    }
-
-    public void decrementLikeCount() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-        }
-    }
-
-    public void update(String title, String summary) {
-        this.title = title;
-        this.summary = summary;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public Integer getUserId() {
-        return this.user != null ? this.user.getId() : null;
-    }
 } 

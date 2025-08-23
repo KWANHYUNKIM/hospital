@@ -29,5 +29,6 @@ public class BoardTag {
     private String slug;
 
     @ManyToMany(mappedBy = "tags")
+    @Builder.Default
     private Set<Board> boards = new HashSet<>();
 } 

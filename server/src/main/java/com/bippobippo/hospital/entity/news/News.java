@@ -3,14 +3,15 @@ package com.bippobippo.hospital.entity.news;
 import javax.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "hospital_news")
-@Getter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,12 +37,14 @@ public class News {
     private String representativeImageUrl;
 
     @Column(name = "view_count")
+    @Builder.Default
     private Integer viewCount = 0;
 
     @Column(name = "author_id")
     private Long authorId;
 
     @Column(name = "status", nullable = false)
+    @Builder.Default
     private String status = "ACTIVE";
 
     @Column(name = "created_at")
@@ -64,6 +67,14 @@ public class News {
         updatedAt = LocalDateTime.now();
     }
 
+    public void addImage(NewsImage image) {
+        if (this.images == null) {
+            this.images = new ArrayList<>();
+        }
+        this.images.add(image);
+        image.setNews(this);
+    }
+
     public void update(String title, String summary, String content, String representativeImageUrl, NewsCategory category) {
         this.title = title;
         this.summary = summary;
@@ -75,28 +86,6 @@ public class News {
 
     public void updateStatus(String status) {
         this.status = status;
-    }
-
-    public void setViewCount(Integer viewCount) {
-        this.viewCount = viewCount;
-    }
-
-    public void setAuthorId(Long authorId) {
-        this.authorId = authorId;
-    }
-
-    public void addImage(NewsImage image) {
-        if (this.images == null) {
-            this.images = new java.util.ArrayList<>();
-        }
-        this.images.add(image);
-        image.setNews(this);
-    }
-
-    public void removeImage(NewsImage image) {
-        if (this.images != null) {
-            this.images.remove(image);
-            image.setNews(null);
-        }
+        this.updatedAt = LocalDateTime.now();
     }
 } 

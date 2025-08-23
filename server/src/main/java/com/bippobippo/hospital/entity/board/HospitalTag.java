@@ -1,7 +1,6 @@
 package com.bippobippo.hospital.entity.board;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -10,8 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "hospital_comment_hospital_tags")
-@Getter
-@Setter
+@Data
 public class HospitalTag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

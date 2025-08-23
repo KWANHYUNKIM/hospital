@@ -6,7 +6,7 @@ import com.bippobippo.hospital.dto.response.news.NewsCategoryResponse;
 import com.bippobippo.hospital.dto.response.news.NewsResponse;
 import com.bippobippo.hospital.service.news.NewsService;
 import com.bippobippo.hospital.service.news.NewsCategoryService;
-import com.bippobippo.hospital.service.common.GoogleCloudStorageService;
+// import com.bippobippo.hospital.service.common.GoogleCloudStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ public class NewsController {
 
     private final NewsService newsService;
     private final NewsCategoryService newsCategoryService;
-    private final GoogleCloudStorageService gcsService;
+    // private final GoogleCloudStorageService gcsService;
 
     @GetMapping("/categories")
     public ResponseEntity<?> getCategories() {
@@ -99,10 +99,11 @@ public class NewsController {
     @PostMapping("/upload-image")
     public ResponseEntity<Map<String, String>> uploadNewsImage(@RequestParam("file") MultipartFile file) {
         try {
-            String imageUrl = ((com.bippobippo.hospital.impl.common.GoogleCloudStorageServiceImpl) gcsService).uploadNewsImage(file);
+            // Google Cloud Storage 비활성화로 인해 더미 URL 반환
+            String imageUrl = "storage_disabled_news_" + file.getOriginalFilename();
             Map<String, String> response = new HashMap<>();
             response.put("url", imageUrl);
-            response.put("message", "이미지 업로드 성공");
+            response.put("message", "Google Cloud Storage가 비활성화되어 더미 URL을 사용합니다");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();

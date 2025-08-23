@@ -1,8 +1,7 @@
 package com.bippobippo.hospital.entity.board;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
@@ -10,8 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "hospital_board_meta_fields")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class BoardMetaField {
     @Id

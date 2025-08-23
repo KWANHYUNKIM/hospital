@@ -1,8 +1,7 @@
 package com.bippobippo.hospital.entity.user;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,8 +12,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "roles")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class Role {
     @Id
@@ -38,7 +36,4 @@ public class Role {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public String getRoleName() {
-        return this.roleName;
-    }
 } 

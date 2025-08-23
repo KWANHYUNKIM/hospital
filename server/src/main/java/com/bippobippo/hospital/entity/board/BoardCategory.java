@@ -1,9 +1,8 @@
 package com.bippobippo.hospital.entity.board;
 
 import javax.persistence.*;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,8 +12,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "hospital_board_categories")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class BoardCategory {
     @Id
@@ -67,7 +65,4 @@ public class BoardCategory {
     @OneToMany(mappedBy = "category")
     private List<Board> boards = new ArrayList<>();
 
-    public String getCategoryName() {
-        return this.name;
-    }
 } 

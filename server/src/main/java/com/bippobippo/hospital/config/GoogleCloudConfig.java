@@ -9,18 +9,21 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 
-@Configuration
+// @Configuration
 public class GoogleCloudConfig {
 
-    @Bean
+    // @Bean
     public Storage googleCloudStorage() throws IOException {
-        GoogleCredentials credentials = GoogleCredentials.fromStream(
-            new ClassPathResource("google-cloud-credentials.json").getInputStream()
-        );
+        // Google Cloud 설정 비활성화
+        throw new UnsupportedOperationException("Google Cloud Storage is disabled");
         
-        return StorageOptions.newBuilder()
-            .setCredentials(credentials)
-            .build()
-            .getService();
+        // GoogleCredentials credentials = GoogleCredentials.fromStream(
+        //     new ClassPathResource("google-cloud-credentials.json").getInputStream()
+        // );
+        
+        // return StorageOptions.newBuilder()
+        //     .setCredentials(credentials)
+        //     .build()
+        //     .getService();
     }
 } 

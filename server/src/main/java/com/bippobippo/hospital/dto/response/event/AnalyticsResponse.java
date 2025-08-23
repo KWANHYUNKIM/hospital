@@ -22,20 +22,20 @@ public class AnalyticsResponse {
 
     // 성공 응답 생성
     public static AnalyticsResponse success(String message, Object data) {
-        return AnalyticsResponse.builder()
-                .status("SUCCESS")
-                .message(message)
-                .timestamp(LocalDateTime.now())
-                .data(data)
-                .build();
+        AnalyticsResponse response = new AnalyticsResponse();
+        response.setStatus("SUCCESS");
+        response.setMessage(message);
+        response.setTimestamp(LocalDateTime.now());
+        response.setData(data);
+        return response;
     }
 
     // 실패 응답 생성
     public static AnalyticsResponse error(String message) {
-        return AnalyticsResponse.builder()
-                .status("ERROR")
-                .message(message)
-                .timestamp(LocalDateTime.now())
-                .build();
+        AnalyticsResponse response = new AnalyticsResponse();
+        response.setStatus("ERROR");
+        response.setMessage(message);
+        response.setTimestamp(LocalDateTime.now());
+        return response;
     }
 } 

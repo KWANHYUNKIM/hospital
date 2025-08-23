@@ -2,8 +2,7 @@ package com.bippobippo.hospital.entity.board;
 
 import com.bippobippo.hospital.entity.user.User;
 import com.bippobippo.hospital.entity.board.Comment;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -14,8 +13,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "posts")
-@Getter
-@Setter
+@Data
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -2,11 +2,9 @@ package com.bippobippo.hospital.dto.response.board;
 
 import com.bippobippo.hospital.entity.board.BoardAttachment;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class BoardAttachmentResponse {
     private Integer id;
     
