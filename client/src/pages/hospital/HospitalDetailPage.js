@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { fetchHospitalDetail } from '../../service/hospitalApi';
 import { MdKeyboardArrowLeft } from 'react-icons/md';
 import OperatingTimeSuggestion from '../../components/hospital/OperatingTimeSuggestion';
+import { useAutoAnalytics } from '../../hooks/useAutoAnalytics';
 
 const HospitalDetailPage = () => {
   const { id } = useParams();
@@ -12,6 +13,16 @@ const HospitalDetailPage = () => {
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
 
+  // 자동 이벤트 감지 훅 사용
+  useAutoAnalytics({
+    pageType: 'HOSPITAL_DETAIL_PAGE',
+    autoPageView: true,
+    autoClickTracking: true,
+    pageViewData: {
+      pageTitle: '병원 상세정보',
+      hospitalId: id
+    }
+  });
 
   // 시간 포맷팅 함수 수정 (08시30분 등도 그대로 반환)
   const formatTime = (time) => {

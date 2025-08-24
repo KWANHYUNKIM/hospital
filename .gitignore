@@ -89,3 +89,17 @@ server/src/main/resources/google-cloud-credentials.json
 # Application Properties
 server/src/main/resources/application.yml
 server/src/test/resources/application-test.yml
+server/src/main/resources/application.properties
+server/src/main/resources/application-local.properties
+server/src/main/resources/application-*.properties
+server/src/main/resources/application-*.yml
+server/src/main/resources/application-*.yaml
+
+# Backup files and directories
+backup/
+**/backup/
+*.bson
+*.metadata.json
+*.sql
+mongodb_backup/
+**/dump-*.sql

@@ -51,6 +51,7 @@ import DoctorApprovalPage from './pages/admin/DoctorApprovalPage';
 import NewsDetailList from './components/news/NewsDetailList';
 import NewsEdit from './components/news/NewsEdit';
 import BusStationViewer from './pages/BusStationViewer';
+import AnalyticsConsent from './components/common/AnalyticsConsent';
 //import BigChatModal from './components/chat/BigChatModal';
 //import Jarvis from './components/chat/jarvis';
 
@@ -117,6 +118,7 @@ const AppContent = () => {
                 </Routes>
               </div>
               <Footer />
+              <AnalyticsConsent />
             </>
           } />
         </Routes>

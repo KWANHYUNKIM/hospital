@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchAutoComplete } from '../../service/hospitalApi';
 import { getApiUrl } from '../../utils/api';
+import { useAnalytics } from '../../hooks/useAnalytics';
 
 const AutoComplete = ({ searchQuery, setSearchQuery }) => {
   const [suggestions, setSuggestions] = useState({ hospital: [] });
@@ -10,6 +11,9 @@ const AutoComplete = ({ searchQuery, setSearchQuery }) => {
   const [userLocation, setUserLocation] = useState(null);
   const suggestionsRef = useRef(null);
   const navigate = useNavigate();
+  
+  // 이벤트 수집 훅 사용
+  const { sendSearchEvent, sendPageViewEvent } = useAnalytics();
 
   // 위치 정보 가져오기
   useEffect(() => {
@@ -50,7 +54,7 @@ const AutoComplete = ({ searchQuery, setSearchQuery }) => {
     return () => clearTimeout(timer);
   }, [searchQuery, userLocation]);
 
-  const handleSearch = (queryParam = searchQuery) => {
+  const handleSearch = async (queryParam = searchQuery) => {
     const trimmedQuery = queryParam.trim();
   
     // 검색어가 있으면 검색어 기반 검색 실행
@@ -62,6 +66,14 @@ const AutoComplete = ({ searchQuery, setSearchQuery }) => {
       updatedHistory = updatedHistory.slice(0, 10);
       localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
       setSearchHistory(updatedHistory);
+      
+      // 이벤트 수집: 검색 이벤트 전송
+      const searchResultsCount = suggestions.hospital ? suggestions.hospital.length : 0;
+      await sendSearchEvent(trimmedQuery, searchResultsCount, {
+        latitude: userLocation?.latitude,
+        longitude: userLocation?.longitude,
+        region: extractRegionFromQuery(trimmedQuery)
+      });
       
       // 위치 정보를 포함한 검색 URL 생성
       let url = `/hospitals?query=${encodeURIComponent(trimmedQuery)}`;
@@ -76,8 +88,16 @@ const AutoComplete = ({ searchQuery, setSearchQuery }) => {
     // 검색어가 없으면 위치 기반 검색 시도
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
+          
+          // 이벤트 수집: 위치 기반 검색 이벤트 전송
+          await sendSearchEvent("위치 기반 검색", 0, {
+            latitude,
+            longitude,
+            searchType: "LOCATION_BASED"
+          });
+          
           navigate(`/hospitals?x=${longitude}&y=${latitude}`);
         },
         (error) => {
@@ -120,6 +140,21 @@ const AutoComplete = ({ searchQuery, setSearchQuery }) => {
       }
     }
   }, [selectedIndex]);
+
+  // 지역 추출 헬퍼 함수
+  const extractRegionFromQuery = (query) => {
+    const regions = [
+      "서울", "부산", "대구", "인천", "광주", "대전", "울산", "세종",
+      "경기", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"
+    ];
+    
+    for (const region of regions) {
+      if (query.includes(region)) {
+        return region;
+      }
+    }
+    return null;
+  };
 
   return (
     <div className="relative w-full">

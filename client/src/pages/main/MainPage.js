@@ -1,15 +1,26 @@
-import React, { useState} from "react";
+import React, { useState, useEffect } from "react";
 import AppTour from '../../components/guide/AppTour';
 import AutoComplete from '../../components/search/AutoComplete';
 import MedicalGuideSlider from '../../components/guide/MedicalGuideSlider';
 import NursingHospitalBannerSlider from '../../components/nursing/NursingHospitalBannerSlider';
 import MedicalInfoSection from '../../components/guide/MedicalInfoSection';
 import DownloadSection from '../../components/DownloadSection';
+import { useAutoAnalytics } from '../../hooks/useAutoAnalytics';
 //import WeatherSection from '../components/WeatherSection';
 // import NavigationBar from '../components/NavigationBar';
 
 const MainPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // 자동 이벤트 감지 훅 사용
+  useAutoAnalytics({
+    pageType: 'MAIN_PAGE',
+    autoPageView: true,
+    autoClickTracking: true,
+    pageViewData: {
+      pageTitle: '삐뽀삐뽀119 - 메인페이지'
+    }
+  });
 
   return (
     <div className="video-bg-wrap">

@@ -30,13 +30,20 @@ public class PharmacyAutocompleteService {
         try {
             String query = request.getQuery().trim();
             
-            // BoolQueryBuilder 구성
+            if (query.isEmpty()) {
+                return PharmacyAutocompleteResponse.builder()
+                    .pharmacy(new ArrayList<>())
+                    .build();
+            }
+            
+            // BoolQueryBuilder 구성 - 더 간단하고 안정적인 쿼리 사용
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             
-            // should 쿼리
-            boolQuery.should(QueryBuilders.matchPhrasePrefixQuery("yadmNm", query));
-            boolQuery.should(QueryBuilders.matchPhrasePrefixQuery("addr", query));
-            boolQuery.should(QueryBuilders.wildcardQuery("region.keyword", "*" + query + "*"));
+            // should 쿼리 - match 쿼리 사용
+            boolQuery.should(QueryBuilders.matchQuery("yadmNm", query).boost(3.0f));
+            boolQuery.should(QueryBuilders.matchQuery("addr", query).boost(2.0f));
+            
+            boolQuery.minimumShouldMatch(1);
 
             // SearchSourceBuilder 구성
             SearchSourceBuilder searchSource = new SearchSourceBuilder()
@@ -54,16 +61,24 @@ public class PharmacyAutocompleteService {
             response.getHits().forEach(hit -> {
                 Map<String, Object> source = hit.getSourceAsMap();
                 Map<String, String> suggestion = new HashMap<>();
-                suggestion.put("name", source.get("yadmNm").toString());
-                suggestion.put("address", source.get("addr").toString());
-                suggestions.add(suggestion);
+                
+                // null 체크 추가
+                Object nameObj = source.get("yadmNm");
+                Object addrObj = source.get("addr");
+                
+                if (nameObj != null && addrObj != null) {
+                    suggestion.put("name", nameObj.toString());
+                    suggestion.put("address", addrObj.toString());
+                    suggestions.add(suggestion);
+                }
             });
 
             return PharmacyAutocompleteResponse.builder()
                 .pharmacy(suggestions)
                 .build();
 
-        } catch (IOException e) {
+        } catch (Exception e) {
+            // IOException 대신 일반 Exception으로 변경
             throw new RuntimeException("약국 자동완성 검색 중 오류가 발생했습니다.", e);
         }
     }

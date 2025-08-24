@@ -7,6 +7,7 @@ import OperatingStatus from '../../components/hospital/OperatingStatus';
 import DistanceInfo from '../../components/hospital/DistanceInfo';
 import NursingHospitalBanner from '../../components/nursing/NursingHospitalBanner';
 import FilterDropdown from '../../components/search/FilterDropdown';
+import { useAutoAnalytics } from '../../hooks/useAutoAnalytics';
 
 const filterRegions = [
   { label: "전국", icon: "🌍" },
@@ -114,6 +115,16 @@ const additionalFilters = [
 
 const HospitalListPage = () => {
   const navigate = useNavigate();
+  
+  // 자동 이벤트 감지 훅 사용
+  useAutoAnalytics({
+    pageType: 'HOSPITAL_LIST_PAGE',
+    autoPageView: true,
+    autoClickTracking: true,
+    pageViewData: {
+      pageTitle: '병원 목록'
+    }
+  });
   
   const [selectedRegion, setSelectedRegion] = useState("전국");
   const [selectedSubject, setSelectedSubject] = useState("전체");
@@ -399,11 +410,23 @@ const HospitalListPage = () => {
             {hospitals && hospitals.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {hospitals.map((hospital) => (
+                  {hospitals.map((hospital, index) => (
                     <div
                       key={hospital._id}
                       className="relative bg-white shadow-md hover:shadow-lg rounded-lg overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
                       onClick={() => handleDetailClick(hospital._id)}
+                      data-hospital-id={hospital._id}
+                      data-click-type="DETAIL_VIEW"
+                      data-analytics-page-type="HOSPITAL_LIST_PAGE"
+                      data-analytics-hospital-name={hospital.yadmNm}
+                      data-analytics-hospital-address={hospital.addr}
+                      data-analytics-hospital-category={hospital.category}
+                      data-analytics-search-query={searchQuery}
+                      data-analytics-selected-region={selectedRegion}
+                      data-analytics-selected-subject={selectedSubject}
+                      data-analytics-selected-major={selectedMajor}
+                      data-analytics-current-page={currentPage}
+                      data-analytics-position={index + 1}
                     >
                     
                       {/* 병원 이미지 (비율 고정) */}
@@ -443,6 +466,8 @@ const HospitalListPage = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="ml-2 px-2 py-1 text-blue-500 border border-blue-300 rounded-md flex items-center gap-x-1 hover:bg-blue-100"
+                            data-analytics-click="MAP_VIEW"
+                            data-analytics-hospital-id={hospital._id}
                           >
                             지도보기 🗺️
                           </a>
@@ -469,7 +494,13 @@ const HospitalListPage = () => {
                               <span className="text-blue-600 font-medium">{hospital.telno}</span>
                               <button
                                 className="ml-auto bg-blue-500 text-white px-2 py-1 text-sm rounded-md hover:bg-blue-600 transition"
-                                onClick={() => window.location.href = `tel:${hospital.telno}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `tel:${hospital.telno}`;
+                                }}
+                                data-analytics-click="PHONE_CALL"
+                                data-analytics-hospital-id={hospital._id}
+                                data-analytics-phone-number={hospital.telno}
                               >
                                 📞 바로통화
                               </button>
