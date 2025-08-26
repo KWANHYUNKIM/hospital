@@ -19,7 +19,7 @@ public class BusArrivalPredictionScheduler {
     private final BusStationService busStationService;
     
     // 30초마다 정류장 도착 예측 업데이트 (실시간성 향상)
-    @Scheduled(fixedRate = 30000)
+    // @Scheduled(fixedRate = 30000)  // 일시적으로 비활성화
     public void updateArrivalPredictions() {
         long startTime = System.currentTimeMillis();
         log.info("🚌 정류장 도착 예측 업데이트 시작 - {}", new java.util.Date());

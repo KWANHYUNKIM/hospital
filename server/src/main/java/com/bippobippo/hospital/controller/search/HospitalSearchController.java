@@ -2,6 +2,8 @@ package com.bippobippo.hospital.controller.search;
 
 import com.bippobippo.hospital.elasticsearch.service.HospitalSearchService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -12,6 +14,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HospitalSearchController {
 
+    private static final Logger logger = LoggerFactory.getLogger(HospitalSearchController.class);
     private final HospitalSearchService hospitalSearchService;
 
     @GetMapping("/search")
@@ -27,6 +30,9 @@ public class HospitalSearchController {
             @RequestParam(required = false) Double y,
             @RequestParam(defaultValue = "10km") String distance) {
 
+        logger.info("병원 검색 요청 받음 - page: {}, limit: {}, query: {}, region: {}, category: {}, major: {}", 
+            page, limit, query, region, category, major);
+
         Map<String, Object> searchParams = new HashMap<>();
         searchParams.put("page", page);
         searchParams.put("limit", limit);
@@ -34,16 +40,21 @@ public class HospitalSearchController {
         searchParams.put("subject", subject);
         searchParams.put("category", category);
         searchParams.put("major", major);
-        searchParams.put("keyword", query);
-        searchParams.put("latitude", y);
-        searchParams.put("longitude", x);
+        searchParams.put("query", query);
+        searchParams.put("x", x);
+        searchParams.put("y", y);
         searchParams.put("distance", distance);
 
         try {
-            return hospitalSearchService.searchHospitals(searchParams);
+            logger.info("HospitalSearchService 호출 시작");
+            Map<String, Object> result = hospitalSearchService.searchHospitals(searchParams);
+            logger.info("병원 검색 성공 - 결과 수: {}", result.get("totalCount"));
+            return result;
         } catch (Exception e) {
+            logger.error("병원 검색 중 오류 발생:", e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "검색 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("details", e.toString());
             return errorResponse;
         }
     }

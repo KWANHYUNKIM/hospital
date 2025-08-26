@@ -25,6 +25,8 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.unit.DistanceUnit;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 
 import java.io.IOException;
 import java.util.*;
@@ -42,112 +44,140 @@ public class HospitalSearchService {
      */
     public Map<String, Object> searchHospitals(Map<String, Object> searchParams) throws IOException {
         try {
+            logger.info("병원 검색 시작 - 파라미터: {}", searchParams);
+            
             SearchRequest searchRequest = new SearchRequest("hospitals");
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             
-            // 기본 검색 크기 설정
-            int size = searchParams.containsKey("size") ? (Integer) searchParams.get("size") : 20;
-            int from = searchParams.containsKey("from") ? (Integer) searchParams.get("from") : 0;
-            searchSourceBuilder.size(size);
+            // 기본 검색 크기 설정 (클라이언트에서 page, limit으로 보냄)
+            int limit = searchParams.containsKey("limit") ? Integer.parseInt(searchParams.get("limit").toString()) : 10;
+            int page = searchParams.containsKey("page") ? Integer.parseInt(searchParams.get("page").toString()) : 1;
+            int from = (page - 1) * limit;
+            
+            logger.info("페이지네이션 설정 - page: {}, limit: {}, from: {}", page, limit, from);
             searchSourceBuilder.from(from);
+            searchSourceBuilder.size(limit);
             
-            // 쿼리 구성
-            BoolQueryBuilder boolQuery = buildSearchQuery(searchParams);
+            // Bool 쿼리 구성
+            BoolQueryBuilder boolQuery = new BoolQueryBuilder();
+            
+            // 검색어가 있는 경우
+            if (searchParams.containsKey("query") && searchParams.get("query") != null && !searchParams.get("query").toString().trim().isEmpty()) {
+                String query = searchParams.get("query").toString().trim();
+                logger.info("검색어 있음 - query: {}", query);
+                
+                // 병원명, 주소, 전공 등에서 검색
+                boolQuery.must(QueryBuilders.multiMatchQuery(query)
+                    .field("yadmNm", 3.0f)  // 병원명에 가중치 3
+                    .field("addr", 1.0f)    // 주소에 가중치 1
+                    .field("major", 2.0f)   // 전공에 가중치 2
+                    .type(MultiMatchQueryBuilder.Type.BEST_FIELDS));
+            } else {
+                logger.info("검색어 없음 - match_all 쿼리 사용");
+                boolQuery.must(QueryBuilders.matchAllQuery());
+            }
+            
+            // 필터 조건들 추가
+            List<QueryBuilder> filters = new ArrayList<>();
+            
+            // 지역 필터
+            if (searchParams.containsKey("region") && searchParams.get("region") != null && !searchParams.get("region").toString().trim().isEmpty()) {
+                String region = searchParams.get("region").toString().trim();
+                logger.info("지역 필터 추가: {}", region);
+                filters.add(QueryBuilders.termQuery("region", region));
+            }
+            
+            // 카테고리 필터
+            if (searchParams.containsKey("category") && searchParams.get("category") != null && !searchParams.get("category").toString().trim().isEmpty()) {
+                String category = searchParams.get("category").toString().trim();
+                logger.info("카테고리 필터 추가: {}", category);
+                filters.add(QueryBuilders.termQuery("category", category));
+            }
+            
+            // 전공 필터
+            if (searchParams.containsKey("major") && searchParams.get("major") != null && !searchParams.get("major").toString().trim().isEmpty()) {
+                String major = searchParams.get("major").toString().trim();
+                logger.info("전공 필터 추가: {}", major);
+                filters.add(QueryBuilders.termQuery("major", major));
+            }
+            
+            // 필터들을 bool 쿼리에 추가
+            if (!filters.isEmpty()) {
+                for (QueryBuilder filter : filters) {
+                    boolQuery.filter(filter);
+                }
+            }
+            
+            logger.info("쿼리 구성 완료 - must: {}, should: {}, filter: {}", 
+                boolQuery.must().size(), boolQuery.should().size(), boolQuery.filter().size());
+            
             searchSourceBuilder.query(boolQuery);
-            
-            // 정렬 설정
-            setupSorting(searchSourceBuilder, searchParams);
-            
-            // 집계 설정
-            setupAggregations(searchSourceBuilder, searchParams);
-            
             searchRequest.source(searchSourceBuilder);
             
+            logger.info("Elasticsearch 검색 요청 전송 - 인덱스: {}", searchRequest.indices()[0]);
+            
+            // 검색 실행
             SearchResponse response = elasticsearchClient.search(searchRequest, RequestOptions.DEFAULT);
-            return processSearchResponse(response, searchParams);
+            
+            logger.info("Elasticsearch 검색 응답 받음 - 총 히트: {}", response.getHits().getTotalHits().value);
+            
+            // 결과 처리
+            List<Map<String, Object>> hospitals = new ArrayList<>();
+            for (SearchHit hit : response.getHits().getHits()) {
+                Map<String, Object> hospital = hit.getSourceAsMap();
+                hospital.put("_id", hit.getId());
+                hospital.put("_score", hit.getScore());
+                hospitals.add(hospital);
+            }
+            
+            // 응답 구성
+            Map<String, Object> result = new HashMap<>();
+            result.put("data", hospitals);
+            result.put("totalCount", response.getHits().getTotalHits().value);
+            result.put("totalPages", (int) Math.ceil((double) response.getHits().getTotalHits().value / limit));
+            result.put("currentPage", page);
+            result.put("maxScore", response.getHits().getMaxScore());
+            
+            logger.info("검색 완료 - 결과 수: {}, 총 페이지: {}", hospitals.size(), result.get("totalPages"));
+            
+            return result;
             
         } catch (Exception e) {
-            logger.error("병원 검색 중 오류 발생:", e);
-            throw new RuntimeException("병원 검색 실패", e);
+            logger.error("병원 검색 중 오류 발생", e);
+            throw new IOException("병원 검색 실패", e);
         }
     }
     
     /**
-     * 검색 쿼리 구성
+     * 검색 쿼리 구성 (단계별 복원)
      */
     private BoolQueryBuilder buildSearchQuery(Map<String, Object> searchParams) {
+        logger.info("검색 쿼리 구성 시작");
+        
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         
-        // 키워드 검색
-        if (searchParams.containsKey("keyword") && !searchParams.get("keyword").toString().isEmpty()) {
-            String keyword = searchParams.get("keyword").toString();
-            boolQuery.should(QueryBuilders.multiMatchQuery(keyword)
+        // 1단계: 검색어 처리 (query 파라미터)
+        if (searchParams.containsKey("query") && !searchParams.get("query").toString().isEmpty()) {
+            String query = searchParams.get("query").toString().trim();
+            logger.info("검색어 설정 - query: {}", query);
+            
+            // 검색어가 있는 경우 - 필터링 적용
+            boolQuery.must(QueryBuilders.multiMatchQuery(query)
                 .field("yadmNm", 3.0f)
                 .field("addr", 2.0f)
                 .field("major", 1.5f)
-                .field("speciality", 1.0f)
                 .type(org.elasticsearch.index.query.MultiMatchQueryBuilder.Type.BEST_FIELDS)
-                .fuzziness("AUTO"));
-        }
-        
-        // 지역 필터
-        if (searchParams.containsKey("region") && !searchParams.get("region").toString().isEmpty()) {
-            String region = searchParams.get("region").toString();
-            boolQuery.filter(QueryBuilders.termQuery("region", region));
-        }
-        
-        // 카테고리 필터
-        if (searchParams.containsKey("category") && !searchParams.get("category").toString().isEmpty()) {
-            String category = searchParams.get("category").toString();
-            boolQuery.filter(QueryBuilders.termQuery("category", category));
-        }
-        
-        // 전문과목 필터
-        if (searchParams.containsKey("speciality") && !searchParams.get("speciality").toString().isEmpty()) {
-            String speciality = searchParams.get("speciality").toString();
-            boolQuery.filter(QueryBuilders.nestedQuery("speciality", 
-                QueryBuilders.matchQuery("speciality.typeCdNm", speciality), 
-                ScoreMode.Avg));
-        }
-        
-        // 진료시간 필터
-        if (searchParams.containsKey("openNow") && (Boolean) searchParams.get("openNow")) {
-            // 현재 시간에 열려있는 병원 필터링 로직
-            setupOpenNowFilter(boolQuery);
-        }
-        
-        // 위치 기반 검색
-        if (searchParams.containsKey("latitude") && searchParams.containsKey("longitude")) {
-            Double latitude = (Double) searchParams.get("latitude");
-            Double longitude = (Double) searchParams.get("longitude");
-            Double radius = searchParams.containsKey("radius") ? (Double) searchParams.get("radius") : 50.0;
+                .operator(org.elasticsearch.index.query.Operator.OR)
+                .minimumShouldMatch("1"));
             
-            GeoDistanceQueryBuilder geoQuery = QueryBuilders.geoDistanceQuery("location")
-                .point(latitude.doubleValue(), longitude.doubleValue())
-                .distance(radius + "km");
-            boolQuery.filter(geoQuery);
+            logger.info("검색어 쿼리 구성 완료 - yadmNm, addr, major");
+        } else {
+            // 검색어가 없으면 모든 병원 반환
+            logger.info("검색어가 없음 - match_all 쿼리 사용");
+            boolQuery.should(QueryBuilders.matchAllQuery());
         }
         
-        // 응급실 운영 여부
-        if (searchParams.containsKey("emergency") && (Boolean) searchParams.get("emergency")) {
-            boolQuery.filter(QueryBuilders.termQuery("times.emyDayYn", "Y"));
-        }
-        
-        // 야간진료 여부
-        if (searchParams.containsKey("nightCare") && (Boolean) searchParams.get("nightCare")) {
-            boolQuery.filter(QueryBuilders.termQuery("times.emyNgtYn", "Y"));
-        }
-        
-        // 주말진료 여부
-        if (searchParams.containsKey("weekendCare") && (Boolean) searchParams.get("weekendCare")) {
-            boolQuery.filter(QueryBuilders.termQuery("times.rcvSat", "Y"));
-        }
-        
-        // 주차장 보유 여부
-        if (searchParams.containsKey("parking") && (Boolean) searchParams.get("parking")) {
-            boolQuery.filter(QueryBuilders.existsQuery("times.parkQty"));
-        }
-        
+        logger.info("검색 쿼리 구성 완료");
         return boolQuery;
     }
     
@@ -210,10 +240,10 @@ public class HospitalSearchService {
         
         switch (sortBy.toLowerCase()) {
             case "distance":
-                if (searchParams.containsKey("latitude") && searchParams.containsKey("longitude")) {
-                    Double latitude = (Double) searchParams.get("latitude");
-                    Double longitude = (Double) searchParams.get("longitude");
-                    GeoDistanceSortBuilder geoSort = SortBuilders.geoDistanceSort("location", latitude, longitude)
+                if (searchParams.containsKey("x") && searchParams.containsKey("y")) {
+                    Double x = Double.parseDouble(searchParams.get("x").toString());
+                    Double y = Double.parseDouble(searchParams.get("y").toString());
+                    GeoDistanceSortBuilder geoSort = SortBuilders.geoDistanceSort("location", y, x) // lat,lon 순서
                         .order(order)
                         .unit(org.elasticsearch.common.unit.DistanceUnit.KILOMETERS);
                     searchSourceBuilder.sort(geoSort);
@@ -327,13 +357,12 @@ public class HospitalSearchService {
             Map<String, Object> source = hit.getSourceAsMap();
             
             Map<String, Object> hospital = new HashMap<>();
-            hospital.put("id", hit.getId());
-            hospital.put("name", source.get("yadmNm"));
-            hospital.put("address", source.get("addr"));
+            hospital.put("_id", hit.getId());
+            hospital.put("yadmNm", source.get("yadmNm"));
+            hospital.put("addr", source.get("addr"));
             hospital.put("region", source.get("region"));
             hospital.put("category", source.get("category"));
             hospital.put("major", source.get("major"));
-            hospital.put("speciality", source.get("speciality"));
             hospital.put("location", source.get("location"));
             hospital.put("telno", source.get("telno"));
             hospital.put("hospUrl", source.get("hospUrl"));
@@ -355,8 +384,10 @@ public class HospitalSearchService {
         }
         
         Map<String, Object> result = new HashMap<>();
-        result.put("hospitals", hospitals);
-        result.put("total", hits.getTotalHits().value);
+        result.put("data", hospitals);
+        result.put("totalCount", hits.getTotalHits().value);
+        result.put("currentPage", searchParams.containsKey("page") ? Integer.parseInt(searchParams.get("page").toString()) : 1);
+        result.put("totalPages", searchParams.containsKey("limit") ? (int) Math.ceil((double) hits.getTotalHits().value / Integer.parseInt(searchParams.get("limit").toString())) : 1);
         result.put("maxScore", hits.getMaxScore());
         
         // 집계 결과 추가
