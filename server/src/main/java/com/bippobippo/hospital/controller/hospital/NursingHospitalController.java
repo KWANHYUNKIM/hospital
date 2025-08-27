@@ -18,7 +18,30 @@ public class NursingHospitalController {
     private final NursingHospitalService nursingHospitalService;
 
     @GetMapping("/search")
-    public NursingHospitalSearchResponse searchHospitals(NursingHospitalSearchRequest request) {
+    public NursingHospitalSearchResponse searchHospitals(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer limit,
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) Double x,
+            @RequestParam(required = false) Double y,
+            @RequestParam(defaultValue = "10km") String distance) {
+        
+        // 요청 파라미터 로깅
+        System.out.println("요양병원 검색 요청 - page: " + page + ", limit: " + limit + 
+                          ", region: " + region + ", query: " + query + 
+                          ", x: " + x + ", y: " + y + ", distance: " + distance);
+        
+        NursingHospitalSearchRequest request = NursingHospitalSearchRequest.builder()
+                .page(page)
+                .limit(limit)
+                .region(region)
+                .query(query)
+                .x(x)
+                .y(y)
+                .distance(distance)
+                .build();
+        
         return nursingHospitalService.searchHospitals(request);
     }
 

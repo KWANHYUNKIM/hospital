@@ -74,8 +74,12 @@ public class NursingHospitalService {
 
     public NursingHospitalSearchResponse searchHospitals(NursingHospitalSearchRequest request) {
         try {
-            int page = request.getPage();
-            int limit = request.getLimit();
+            // null 체크 및 기본값 설정
+            int page = request.getPage() != null ? request.getPage() : 1;
+            int limit = request.getLimit() != null ? request.getLimit() : 10;
+            
+            // distance가 null인 경우 기본값 설정
+            String distance = request.getDistance() != null ? request.getDistance() : "10km";
 
             // 1) BoolQueryBuilder 구성
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -106,7 +110,7 @@ public class NursingHospitalService {
             if (request.getX() != null && request.getY() != null) {
                 boolQuery.filter(QueryBuilders.geoDistanceQuery("location")
                     .point(request.getY(), request.getX())
-                    .distance(request.getDistance())
+                    .distance(distance)
                     .geoDistance(GeoDistance.ARC));
             }
 
