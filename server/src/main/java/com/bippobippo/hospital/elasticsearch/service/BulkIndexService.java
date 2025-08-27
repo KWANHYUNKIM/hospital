@@ -475,11 +475,213 @@ public class BulkIndexService {
     }
     
     /**
-     * 지도 데이터 벌크 색인
+     * 지도 데이터 벌크 색인 (Node.js bulkMapIndex.js와 동일한 로직)
      */
     public void bulkMapIndex() throws IOException {
-        // TODO: 구현 필요
-        logger.info("지도 데이터 벌크 색인 - 구현 예정");
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            logger.info("🚀 지도 데이터 벌크 색인 시작...");
+            
+            // 1. 데이터 로드 시작
+            logger.info("1. 데이터 로드 시작...");
+            
+            // 병원 데이터 조회
+            List<Map> hospitals = mongoTemplate.find(new Query(), Map.class, "hospitals");
+            logger.info("총 병원 수: {}", hospitals.size());
+            
+            // 약국 데이터 조회
+            List<Map> pharmacies = mongoTemplate.find(new Query(), Map.class, "pharmacies");
+            logger.info("총 약국 수: {}", pharmacies.size());
+            
+            // 2. 위치 기반 그룹화 시작
+            logger.info("2. 위치 기반 그룹화 시작...");
+            Map<String, Map<String, Object>> locationGroups = new HashMap<>();
+            
+            // 병원 데이터 처리
+            for (Map hospital : hospitals) {
+                if (hospital.get("YPos") != null && hospital.get("XPos") != null) {
+                    String key = hospital.get("YPos") + "_" + hospital.get("XPos");
+                    if (!locationGroups.containsKey(key)) {
+                        Map<String, Object> group = new HashMap<>();
+                        Map<String, Double> location = new HashMap<>();
+                        location.put("lat", (Double) hospital.get("YPos"));
+                        location.put("lon", (Double) hospital.get("XPos"));
+                        group.put("location", location);
+                        group.put("markers", new ArrayList<>());
+                        locationGroups.put(key, group);
+                    }
+                    
+                    Map<String, Object> marker = new HashMap<>();
+                    marker.put("type", "hospital");
+                    marker.put("data", hospital);
+                    ((List<Map<String, Object>>) locationGroups.get(key).get("markers")).add(marker);
+                }
+            }
+            
+            // 약국 데이터 처리
+            for (Map pharmacy : pharmacies) {
+                if (pharmacy.get("Ypos") != null && pharmacy.get("Xpos") != null) {
+                    String key = pharmacy.get("Ypos") + "_" + pharmacy.get("Xpos");
+                    if (!locationGroups.containsKey(key)) {
+                        Map<String, Object> group = new HashMap<>();
+                        Map<String, Double> location = new HashMap<>();
+                        location.put("lat", (Double) pharmacy.get("Ypos"));
+                        location.put("lon", (Double) pharmacy.get("Xpos"));
+                        group.put("location", location);
+                        group.put("markers", new ArrayList<>());
+                        locationGroups.put(key, group);
+                    }
+                    
+                    Map<String, Object> marker = new HashMap<>();
+                    marker.put("type", "pharmacy");
+                    marker.put("data", pharmacy);
+                    ((List<Map<String, Object>>) locationGroups.get(key).get("markers")).add(marker);
+                }
+            }
+            
+            logger.info("총 그룹 수: {}", locationGroups.size());
+            
+            // 3. Elasticsearch 문서 변환 시작
+            logger.info("3. Elasticsearch 문서 변환 시작...");
+            List<Map<String, Object>> allDocs = new ArrayList<>();
+            
+            for (Map.Entry<String, Map<String, Object>> entry : locationGroups.entrySet()) {
+                String key = entry.getKey();
+                Map<String, Object> group = entry.getValue();
+                List<Map<String, Object>> markers = (List<Map<String, Object>>) group.get("markers");
+                int totalCount = markers.size();
+                
+                // 같은 위치에 2개 이상의 마커가 있는 경우 클러스터링
+                if (totalCount > 1) {
+                    List<Map<String, Object>> hospitalDetails = new ArrayList<>();
+                    List<Map<String, Object>> pharmacyDetails = new ArrayList<>();
+                    
+                    for (Map<String, Object> marker : markers) {
+                        String type = (String) marker.get("type");
+                        Map<String, Object> data = (Map<String, Object>) marker.get("data");
+                        
+                        if ("hospital".equals(type)) {
+                            Map<String, Object> hospitalDetail = new HashMap<>();
+                            hospitalDetail.put("type", "hospital");
+                            hospitalDetail.put("name", data.get("name"));
+                            hospitalDetail.put("yadmNm", data.get("yadmNm"));
+                            hospitalDetail.put("addr", data.get("addr"));
+                            hospitalDetail.put("telno", data.get("telno"));
+                            hospitalDetail.put("clCd", data.get("clCd"));
+                            hospitalDetail.put("clCdNm", data.get("clCdNm"));
+                            hospitalDetail.put("ykiho", data.get("ykiho"));
+                            hospitalDetails.add(hospitalDetail);
+                        } else if ("pharmacy".equals(type)) {
+                            Map<String, Object> pharmacyDetail = new HashMap<>();
+                            pharmacyDetail.put("type", "pharmacy");
+                            pharmacyDetail.put("ykiho", data.get("ykiho"));
+                            pharmacyDetail.put("yadmNm", data.get("yadmNm"));
+                            pharmacyDetail.put("clCd", data.get("clCd"));
+                            pharmacyDetail.put("clCdNm", data.get("clCdNm"));
+                            pharmacyDetail.put("addr", data.get("addr"));
+                            pharmacyDetail.put("telno", data.get("telno"));
+                            pharmacyDetails.add(pharmacyDetail);
+                        }
+                    }
+                    
+                    Map<String, Object> clusterDoc = new HashMap<>();
+                    clusterDoc.put("type", "cluster");
+                    clusterDoc.put("location", group.get("location"));
+                    clusterDoc.put("clusterId", key);
+                    clusterDoc.put("clusterCount", totalCount);
+                    clusterDoc.put("isClustered", true);
+                    clusterDoc.put("hospitals", hospitalDetails);
+                    clusterDoc.put("pharmacies", pharmacyDetails);
+                    clusterDoc.put("hospitalCount", hospitalDetails.size());
+                    clusterDoc.put("pharmacyCount", pharmacyDetails.size());
+                    
+                    allDocs.add(clusterDoc);
+                } else {
+                    // 단일 마커인 경우
+                    Map<String, Object> marker = markers.get(0);
+                    String type = (String) marker.get("type");
+                    Map<String, Object> data = (Map<String, Object>) marker.get("data");
+                    
+                    if ("hospital".equals(type)) {
+                        Map<String, Object> hospitalDoc = new HashMap<>();
+                        hospitalDoc.put("type", "hospital");
+                        hospitalDoc.put("name", data.get("name"));
+                        hospitalDoc.put("yadmNm", data.get("yadmNm"));
+                        hospitalDoc.put("addr", data.get("addr"));
+                        hospitalDoc.put("telno", data.get("telno"));
+                        hospitalDoc.put("clCd", data.get("clCd"));
+                        hospitalDoc.put("clCdNm", data.get("clCdNm"));
+                        hospitalDoc.put("ykiho", data.get("ykiho"));
+                        hospitalDoc.put("location", group.get("location"));
+                        hospitalDoc.put("isClustered", false);
+                        allDocs.add(hospitalDoc);
+                    } else if ("pharmacy".equals(type)) {
+                        Map<String, Object> pharmacyDoc = new HashMap<>();
+                        pharmacyDoc.put("type", "pharmacy");
+                        pharmacyDoc.put("ykiho", data.get("ykiho"));
+                        pharmacyDoc.put("yadmNm", data.get("yadmNm"));
+                        pharmacyDoc.put("clCd", data.get("clCd"));
+                        pharmacyDoc.put("clCdNm", data.get("clCdNm"));
+                        pharmacyDoc.put("addr", data.get("addr"));
+                        pharmacyDoc.put("telno", data.get("telno"));
+                        pharmacyDoc.put("location", group.get("location"));
+                        pharmacyDoc.put("isClustered", false);
+                        allDocs.add(pharmacyDoc);
+                    }
+                }
+            }
+            
+            logger.info("색인할 총 문서 수: {}", allDocs.size());
+            logger.info("클러스터 수: {}", allDocs.stream().filter(doc -> (Boolean) doc.get("isClustered")).count());
+            logger.info("단일 마커 수: {}", allDocs.stream().filter(doc -> !(Boolean) doc.get("isClustered")).count());
+            
+            // 4. Elasticsearch 색인 시작
+            logger.info("4. Elasticsearch 색인 시작...");
+            for (int i = 0; i < allDocs.size(); i += BATCH_SIZE) {
+                int endIndex = Math.min(i + BATCH_SIZE, allDocs.size());
+                List<Map<String, Object>> chunk = allDocs.subList(i, endIndex);
+                
+                BulkRequest bulkRequest = new BulkRequest();
+                
+                for (Map<String, Object> doc : chunk) {
+                    IndexRequest indexRequest = new IndexRequest("map_data")
+                        .source(doc, XContentType.JSON);
+                    bulkRequest.add(indexRequest);
+                }
+                
+                BulkResponse bulkResponse = elasticsearchClient.bulk(bulkRequest, org.elasticsearch.client.RequestOptions.DEFAULT);
+                
+                if (bulkResponse.hasFailures()) {
+                    logger.error("❌ 배치 {} 색인 실패: {}", (i / BATCH_SIZE) + 1, bulkResponse.buildFailureMessage());
+                } else {
+                    logger.info("✅ {}개 색인 완료", i + chunk.size());
+                }
+            }
+            
+            // 인덱스 새로고침
+            elasticsearchClient.indices().refresh(new RefreshRequest("map_data"), org.elasticsearch.client.RequestOptions.DEFAULT);
+            
+            // 색인 후 실제 문서 개수 조회
+            try {
+                org.elasticsearch.client.core.CountRequest countRequest = new org.elasticsearch.client.core.CountRequest("map_data");
+                org.elasticsearch.client.core.CountResponse countResponse = elasticsearchClient.count(countRequest, org.elasticsearch.client.RequestOptions.DEFAULT);
+                long count = countResponse.getCount();
+                logger.info("Elasticsearch map_data 문서 개수: {}", count);
+            } catch (Exception err) {
+                logger.error("count API 호출 중 오류: {}", err.getMessage());
+            }
+            
+            long endTime = System.currentTimeMillis();
+            long processingTime = endTime - startTime;
+            
+            logger.info("✅ 모든 지도 데이터 색인 완료!");
+            logger.info("📊 총 처리 시간: {}ms", processingTime);
+            
+        } catch (Exception e) {
+            logger.error("❌ 지도 데이터 벌크 색인 중 오류 발생:", e);
+            throw e;
+        }
     }
     
     /**

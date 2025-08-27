@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 public class ElasticsearchService {
@@ -108,6 +110,54 @@ public class ElasticsearchService {
         } catch (Exception e) {
             logger.error("❌ 클러스터 데이터 재색인 중 오류 발생:", e);
             throw new RuntimeException("클러스터 재색인 프로세스 실패", e);
+        }
+    }
+    
+    /**
+     * 인덱스 존재 여부 확인
+     */
+    public boolean indexExists(String indexName) {
+        try {
+            return indexService.indexExists(indexName);
+        } catch (Exception e) {
+            logger.error("❌ 인덱스 존재 여부 확인 중 오류 발생: {}", indexName, e);
+            return false;
+        }
+    }
+    
+    /**
+     * 인덱스 삭제
+     */
+    public boolean deleteIndex(String indexName) {
+        try {
+            return indexService.deleteIndex(indexName);
+        } catch (Exception e) {
+            logger.error("❌ 인덱스 삭제 중 오류 발생: {}", indexName, e);
+            return false;
+        }
+    }
+    
+    /**
+     * map_data 인덱스 생성
+     */
+    public boolean createMapDataIndex() {
+        try {
+            return indexService.createMapDataIndex();
+        } catch (Exception e) {
+            logger.error("❌ map_data 인덱스 생성 중 오류 발생:", e);
+            return false;
+        }
+    }
+    
+    /**
+     * 인덱스 정보 조회
+     */
+    public Map<String, Object> getIndexInfo(String indexName) {
+        try {
+            return indexService.getIndexInfo(indexName);
+        } catch (Exception e) {
+            logger.error("❌ 인덱스 정보 조회 중 오류 발생: {}", indexName, e);
+            return new HashMap<>();
         }
     }
 } 

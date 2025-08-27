@@ -19,6 +19,7 @@ import org.elasticsearch.client.RequestOptions;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.HashMap;
 
 @Service
 public class IndexService {
@@ -242,16 +243,14 @@ public class IndexService {
             
             String mappingJson = """
                 {
-                  "mappings": {
-                    "properties": {
-                      "id": { "type": "keyword" },
-                      "type": { "type": "keyword" },
-                      "name": { "type": "text" },
-                      "address": { "type": "text" },
-                      "location": { "type": "geo_point" },
-                      "category": { "type": "keyword" },
-                      "region": { "type": "keyword" }
-                    }
+                  "properties": {
+                    "id": { "type": "keyword" },
+                    "type": { "type": "keyword" },
+                    "name": { "type": "text" },
+                    "address": { "type": "text" },
+                    "location": { "type": "geo_point" },
+                    "category": { "type": "keyword" },
+                    "region": { "type": "keyword" }
                   }
                 }
                 """;
@@ -425,6 +424,125 @@ public class IndexService {
         } catch (Exception e) {
             logger.error("❌ 인덱스 {} 존재 여부 확인 중 오류 발생:", indexName, e);
             return false;
+        }
+    }
+    
+    /**
+     * 인덱스 삭제 (일반적인 인덱스)
+     */
+    public boolean deleteIndex(String indexName) throws IOException {
+        try {
+            GetIndexRequest existsRequest = new GetIndexRequest(indexName);
+            boolean existsResponse = elasticsearchClient.indices().exists(existsRequest, RequestOptions.DEFAULT);
+            if (existsResponse) {
+                DeleteIndexRequest deleteRequest = new DeleteIndexRequest(indexName);
+                AcknowledgedResponse deleteResponse = elasticsearchClient.indices().delete(deleteRequest, RequestOptions.DEFAULT);
+                logger.info("✅ 인덱스 '{}' 삭제 완료!", indexName);
+                return deleteResponse.isAcknowledged();
+            } else {
+                logger.info("인덱스 '{}'가 존재하지 않습니다.", indexName);
+                return true;
+            }
+        } catch (Exception e) {
+            logger.error("❌ 인덱스 {} 삭제 중 오류 발생:", indexName, e);
+            return false;
+        }
+    }
+    
+    /**
+     * map_data 인덱스 생성
+     */
+    public boolean createMapDataIndex() throws IOException {
+        try {
+            // 인덱스 존재 여부 확인
+            GetIndexRequest existsRequest = new GetIndexRequest("map_data");
+            boolean existsResponse = elasticsearchClient.indices().exists(existsRequest, RequestOptions.DEFAULT);
+            
+            if (existsResponse) {
+                logger.info("기존 인덱스 'map_data' 삭제 중...");
+                DeleteIndexRequest deleteRequest = new DeleteIndexRequest("map_data");
+                AcknowledgedResponse deleteResponse = elasticsearchClient.indices().delete(deleteRequest, RequestOptions.DEFAULT);
+                logger.info("기존 인덱스 'map_data' 삭제 완료!");
+            }
+
+            // 인덱스 생성
+            CreateIndexRequest createRequest = new CreateIndexRequest("map_data");
+            createRequest.settings(Settings.builder()
+                .put("index.number_of_shards", 1)
+                .put("index.number_of_replicas", 1)
+            );
+            
+            String mappingJson = """
+                {
+                  "properties": {
+                    "type": { "type": "keyword" },
+                    "name": { "type": "text" },
+                    "address": { "type": "text" },
+                    "category": { "type": "keyword" },
+                    "region": { "type": "keyword" },
+                    "location": { "type": "geo_point" },
+                    "clusterId": { "type": "keyword" },
+                    "clusterCount": { "type": "integer" },
+                    "isClustered": { "type": "boolean" }
+                  }
+                }
+                """;
+            
+            createRequest.mapping(mappingJson, XContentType.JSON);
+            
+            AcknowledgedResponse response = elasticsearchClient.indices().create(createRequest, RequestOptions.DEFAULT);
+            
+            if (response.isAcknowledged()) {
+                logger.info("✅ map_data 인덱스 생성 완료!");
+                return true;
+            } else {
+                logger.error("❌ map_data 인덱스 생성 실패!");
+                return false;
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ map_data 인덱스 생성 중 오류 발생:", e);
+            return false;
+        }
+    }
+    
+    /**
+     * 인덱스 정보 조회
+     */
+    public Map<String, Object> getIndexInfo(String indexName) throws IOException {
+        try {
+            GetIndexRequest getRequest = new GetIndexRequest(indexName);
+            GetIndexResponse response = elasticsearchClient.indices().get(getRequest, RequestOptions.DEFAULT);
+            
+            Map<String, Object> indexInfo = new HashMap<>();
+            indexInfo.put("indexName", indexName);
+            indexInfo.put("exists", true);
+            
+            // 인덱스 설정 정보
+            if (response.getSettings().get(indexName) != null) {
+                Settings settings = response.getSettings().get(indexName);
+                indexInfo.put("shards", settings.getAsInt("index.number_of_shards", 1));
+                indexInfo.put("replicas", settings.getAsInt("index.number_of_replicas", 1));
+            }
+            
+            // 매핑 정보
+            if (response.getMappings().get(indexName) != null) {
+                indexInfo.put("mappings", response.getMappings().get(indexName).sourceAsMap());
+            }
+            
+            // 문서 수
+            long documentCount = getDocumentCount(indexName);
+            indexInfo.put("documentCount", documentCount);
+            
+            return indexInfo;
+            
+        } catch (Exception e) {
+            logger.error("❌ 인덱스 {} 정보 조회 중 오류 발생:", indexName, e);
+            Map<String, Object> errorInfo = new HashMap<>();
+            errorInfo.put("indexName", indexName);
+            errorInfo.put("exists", false);
+            errorInfo.put("error", e.getMessage());
+            return errorInfo;
         }
     }
 } 

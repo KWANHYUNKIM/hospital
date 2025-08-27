@@ -387,4 +387,114 @@ public class AutoIndexingService {
             Thread.currentThread().interrupt();
         }
     }
+    
+    /**
+     * map_data 인덱스 생성
+     */
+    public Map<String, Object> createMapDataIndex() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            logger.info("🚀 map_data 인덱스 생성 시작...");
+            
+            // 인덱스 존재 여부 확인
+            boolean exists = elasticsearchService.indexExists("map_data");
+            
+            if (exists) {
+                logger.info("⚠️ 기존 map_data 인덱스가 존재합니다. 삭제 중...");
+                elasticsearchService.deleteIndex("map_data");
+                logger.info("✅ 기존 인덱스 삭제 완료");
+            }
+            
+            // 새 인덱스 생성
+            boolean created = elasticsearchService.createMapDataIndex();
+            
+            if (created) {
+                result.put("success", true);
+                result.put("message", "map_data 인덱스가 성공적으로 생성되었습니다.");
+                result.put("timestamp", new Date());
+                logger.info("✅ map_data 인덱스 생성 완료!");
+            } else {
+                result.put("success", false);
+                result.put("message", "map_data 인덱스 생성에 실패했습니다.");
+                result.put("timestamp", new Date());
+                logger.error("❌ map_data 인덱스 생성 실패");
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ map_data 인덱스 생성 중 오류 발생:", e);
+            result.put("success", false);
+            result.put("message", "map_data 인덱스 생성 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("error", e.getMessage());
+            result.put("timestamp", new Date());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * map_data 인덱스 삭제
+     */
+    public Map<String, Object> deleteMapDataIndex() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            logger.info("🗑️ map_data 인덱스 삭제 시작...");
+            
+            boolean deleted = elasticsearchService.deleteIndex("map_data");
+            
+            if (deleted) {
+                result.put("success", true);
+                result.put("message", "map_data 인덱스가 성공적으로 삭제되었습니다.");
+                result.put("timestamp", new Date());
+                logger.info("✅ map_data 인덱스 삭제 완료!");
+            } else {
+                result.put("success", false);
+                result.put("message", "map_data 인덱스 삭제에 실패했습니다.");
+                result.put("timestamp", new Date());
+                logger.error("❌ map_data 인덱스 삭제 실패");
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ map_data 인덱스 삭제 중 오류 발생:", e);
+            result.put("success", false);
+            result.put("message", "map_data 인덱스 삭제 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("error", e.getMessage());
+            result.put("timestamp", new Date());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * map_data 인덱스 상태 확인
+     */
+    public Map<String, Object> getMapDataIndexStatus() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            logger.info("🔍 map_data 인덱스 상태 확인 중...");
+            
+            boolean exists = elasticsearchService.indexExists("map_data");
+            
+            result.put("exists", exists);
+            result.put("timestamp", new Date());
+            
+            if (exists) {
+                // 인덱스 정보 조회
+                Map<String, Object> indexInfo = elasticsearchService.getIndexInfo("map_data");
+                result.put("indexInfo", indexInfo);
+                result.put("message", "map_data 인덱스가 존재합니다.");
+            } else {
+                result.put("message", "map_data 인덱스가 존재하지 않습니다.");
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ map_data 인덱스 상태 확인 중 오류 발생:", e);
+            result.put("error", e.getMessage());
+            result.put("timestamp", new Date());
+        }
+        
+        return result;
+    }
 } 

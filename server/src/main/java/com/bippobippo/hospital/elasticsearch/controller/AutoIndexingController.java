@@ -198,4 +198,52 @@ public class AutoIndexingController {
                 .body(Map.of("error", "성능 통계 조회 중 오류가 발생했습니다."));
         }
     }
+    
+    /**
+     * map_data 인덱스 생성
+     */
+    @PostMapping("/index/map-data/create")
+    public ResponseEntity<Map<String, Object>> createMapDataIndex() {
+        try {
+            logger.info("🚀 map_data 인덱스 생성 요청");
+            Map<String, Object> result = autoIndexingService.createMapDataIndex();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("❌ map_data 인덱스 생성 중 오류 발생:", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "map_data 인덱스 생성 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * map_data 인덱스 삭제
+     */
+    @DeleteMapping("/index/map-data")
+    public ResponseEntity<Map<String, Object>> deleteMapDataIndex() {
+        try {
+            logger.info("🗑️ map_data 인덱스 삭제 요청");
+            Map<String, Object> result = autoIndexingService.deleteMapDataIndex();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("❌ map_data 인덱스 삭제 중 오류 발생:", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "map_data 인덱스 삭제 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * map_data 인덱스 상태 확인
+     */
+    @GetMapping("/index/map-data/status")
+    public ResponseEntity<Map<String, Object>> getMapDataIndexStatus() {
+        try {
+            logger.info("🔍 map_data 인덱스 상태 확인 요청");
+            Map<String, Object> result = autoIndexingService.getMapDataIndexStatus();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("❌ map_data 인덱스 상태 확인 중 오류 발생:", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "map_data 인덱스 상태 확인 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
 } 
