@@ -33,7 +33,7 @@ const ProfileImage = ({
 
   // 랜덤 색상 생성 함수
   const getRandomColor = (username) => {
-    if (!username) return 'bg-gray-500';
+    if (!username || typeof username !== 'string') return 'bg-gray-500';
     const colors = [
       'bg-red-500', 'bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 
       'bg-blue-500', 'bg-cyan-500', 'bg-teal-500', 'bg-green-500',
@@ -45,7 +45,8 @@ const ProfileImage = ({
 
   // 사용자 이니셜 가져오기
   const getInitials = (username) => {
-    return username ? username.charAt(0).toUpperCase() : '?';
+    if (!username || typeof username !== 'string') return '?';
+    return username.charAt(0).toUpperCase();
   };
 
   // 크기별 스타일 클래스

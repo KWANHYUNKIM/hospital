@@ -85,6 +85,9 @@ public class SecurityConfig {
             // 이메일 인증 API - 모든 사용자 허용 (회원가입용)
             .antMatchers("/api/email/**").permitAll()
 
+            // 업로드된 이미지 파일들 - 모든 사용자 접근 허용
+            .antMatchers("/uploads/**").permitAll()
+
             // 기타 모든 API의 GET 요청 허용
             .antMatchers(HttpMethod.GET, "/api/**").permitAll()
 

@@ -103,3 +103,15 @@ backup/
 *.sql
 mongodb_backup/
 **/dump-*.sql
+
+# Uploaded files and images
+server/src/main/resources/static/uploads/
+**/uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp
+*.tiff
+*.svg
