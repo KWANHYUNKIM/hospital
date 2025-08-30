@@ -28,10 +28,11 @@ public class HospitalSearchController {
             @RequestParam(required = false) String query,
             @RequestParam(required = false) Double x,
             @RequestParam(required = false) Double y,
-            @RequestParam(defaultValue = "10km") String distance) {
+            @RequestParam(defaultValue = "10km") String distance,
+            @RequestParam(required = false) String operating) {
 
-        logger.info("병원 검색 요청 받음 - page: {}, limit: {}, query: {}, region: {}, category: {}, major: {}", 
-            page, limit, query, region, category, major);
+        logger.info("병원 검색 요청 받음 - page: {}, limit: {}, query: {}, region: {}, category: {}, major: {}, operating: {}", 
+            page, limit, query, region, category, major, operating);
 
         Map<String, Object> searchParams = new HashMap<>();
         searchParams.put("page", page);
@@ -44,6 +45,7 @@ public class HospitalSearchController {
         searchParams.put("x", x);
         searchParams.put("y", y);
         searchParams.put("distance", distance);
+        searchParams.put("operating", operating);
 
         try {
             logger.info("HospitalSearchService 호출 시작");

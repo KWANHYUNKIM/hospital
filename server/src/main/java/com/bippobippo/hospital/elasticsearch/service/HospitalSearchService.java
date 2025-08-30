@@ -10,6 +10,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.GeoDistanceQueryBuilder;
+import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.index.query.support.QueryParsers;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.search.SearchHit;
@@ -27,6 +28,9 @@ import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.range.Range;
 
 import java.io.IOException;
 import java.util.*;
@@ -101,6 +105,30 @@ public class HospitalSearchService {
                 filters.add(QueryBuilders.termQuery("major", major));
             }
             
+            // 영업중 필터
+            if (searchParams.containsKey("operating") && "true".equals(searchParams.get("operating"))) {
+                logger.info("영업중 필터 추가");
+                setupOpenNowFilter(boolQuery);
+            }
+            
+            // 위치 기반 검색 필터 추가
+            if (searchParams.containsKey("x") && searchParams.containsKey("y") && 
+                searchParams.get("x") != null && searchParams.get("y") != null) {
+                try {
+                    Double x = Double.parseDouble(searchParams.get("x").toString());
+                    Double y = Double.parseDouble(searchParams.get("y").toString());
+                    String distance = searchParams.getOrDefault("distance", "10km").toString();
+                    logger.info("위치 기반 검색 필터 추가 - x: {}, y: {}, distance: {}", x, y, distance);
+                    
+                    filters.add(QueryBuilders.geoDistanceQuery("location")
+                        .point(y, x) // lat, lon 순서
+                        .distance(distance)
+                        .geoDistance(GeoDistance.ARC));
+                } catch (NumberFormatException e) {
+                    logger.warn("위치 좌표 파싱 실패 - x: {}, y: {}", searchParams.get("x"), searchParams.get("y"));
+                }
+            }
+            
             // 필터들을 bool 쿼리에 추가
             if (!filters.isEmpty()) {
                 for (QueryBuilder filter : filters) {
@@ -112,6 +140,13 @@ public class HospitalSearchService {
                 boolQuery.must().size(), boolQuery.should().size(), boolQuery.filter().size());
             
             searchSourceBuilder.query(boolQuery);
+            
+            // 정렬 설정 (위치 기반 검색인 경우 거리 정렬)
+            setupSorting(searchSourceBuilder, searchParams);
+            
+            // 집계 설정
+            setupAggregations(searchSourceBuilder, searchParams);
+            
             searchRequest.source(searchSourceBuilder);
             
             logger.info("Elasticsearch 검색 요청 전송 - 인덱스: {}", searchRequest.indices()[0]);
@@ -121,26 +156,8 @@ public class HospitalSearchService {
             
             logger.info("Elasticsearch 검색 응답 받음 - 총 히트: {}", response.getHits().getTotalHits().value);
             
-            // 결과 처리
-            List<Map<String, Object>> hospitals = new ArrayList<>();
-            for (SearchHit hit : response.getHits().getHits()) {
-                Map<String, Object> hospital = hit.getSourceAsMap();
-                hospital.put("_id", hit.getId());
-                hospital.put("_score", hit.getScore());
-                hospitals.add(hospital);
-            }
-            
-            // 응답 구성
-            Map<String, Object> result = new HashMap<>();
-            result.put("data", hospitals);
-            result.put("totalCount", response.getHits().getTotalHits().value);
-            result.put("totalPages", (int) Math.ceil((double) response.getHits().getTotalHits().value / limit));
-            result.put("currentPage", page);
-            result.put("maxScore", response.getHits().getMaxScore());
-            
-            logger.info("검색 완료 - 결과 수: {}, 총 페이지: {}", hospitals.size(), result.get("totalPages"));
-            
-            return result;
+            // processSearchResponse를 사용하여 결과 처리 (거리 정보 포함)
+            return processSearchResponse(response, searchParams);
             
         } catch (Exception e) {
             logger.error("병원 검색 중 오류 발생", e);
@@ -191,40 +208,45 @@ public class HospitalSearchService {
         int hour = now.get(Calendar.HOUR_OF_DAY);
         int minute = now.get(Calendar.MINUTE);
         
-        String currentTime = String.format("%02d:%02d", hour, minute);
+        // 현재 시간을 분 단위로 변환 (예: 18:33 -> 1833)
+        int currentTimeMinutes = hour * 100 + minute;
         
         BoolQueryBuilder timeQuery = QueryBuilders.boolQuery();
         
         switch (dayOfWeek) {
             case Calendar.MONDAY:
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtMonStart").lte(currentTime));
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtMonEnd").gte(currentTime));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtMonStart").lte(currentTimeMinutes));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtMonEnd").gte(currentTimeMinutes));
                 break;
             case Calendar.TUESDAY:
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtTueStart").lte(currentTime));
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtTueEnd").gte(currentTime));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtTueStart").lte(currentTimeMinutes));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtTueEnd").gte(currentTimeMinutes));
                 break;
             case Calendar.WEDNESDAY:
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtWedStart").lte(currentTime));
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtWedEnd").gte(currentTime));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtWedStart").lte(currentTimeMinutes));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtWedEnd").gte(currentTimeMinutes));
                 break;
             case Calendar.THURSDAY:
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtThuStart").lte(currentTime));
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtThuEnd").gte(currentTime));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtThuStart").lte(currentTimeMinutes));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtThuEnd").gte(currentTimeMinutes));
                 break;
             case Calendar.FRIDAY:
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtFriStart").lte(currentTime));
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtFriEnd").gte(currentTime));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtFriStart").lte(currentTimeMinutes));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtFriEnd").gte(currentTimeMinutes));
                 break;
             case Calendar.SATURDAY:
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtSatStart").lte(currentTime));
-                timeQuery.should(QueryBuilders.rangeQuery("times.trmtSatEnd").gte(currentTime));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtSatStart").lte(currentTimeMinutes));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtSatEnd").gte(currentTimeMinutes));
                 break;
             case Calendar.SUNDAY:
-                // 일요일은 대부분 휴진
-                timeQuery.should(QueryBuilders.termQuery("times.rcvSat", "Y"));
+                // 일요일은 대부분 휴진이지만, 24시간 진료하는 병원도 있음
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtSunStart").lte(currentTimeMinutes));
+                timeQuery.must(QueryBuilders.rangeQuery("times.trmtSunEnd").gte(currentTimeMinutes));
                 break;
         }
+        
+        // 휴무일이 아닌지 확인
+        timeQuery.mustNot(QueryBuilders.termQuery("times.noTrmtHoli", "휴무"));
         
         boolQuery.filter(timeQuery);
     }
@@ -238,26 +260,52 @@ public class HospitalSearchService {
         
         SortOrder order = "asc".equalsIgnoreCase(sortOrder) ? SortOrder.ASC : SortOrder.DESC;
         
-        switch (sortBy.toLowerCase()) {
-            case "distance":
-                if (searchParams.containsKey("x") && searchParams.containsKey("y")) {
-                    Double x = Double.parseDouble(searchParams.get("x").toString());
-                    Double y = Double.parseDouble(searchParams.get("y").toString());
+        // 위치 기반 검색인 경우 자동으로 거리 정렬 적용
+        Object xObj = searchParams.get("x");
+        Object yObj = searchParams.get("y");
+        
+        if (xObj != null && yObj != null) {
+            try {
+                Double x = null;
+                Double y = null;
+                
+                if (xObj instanceof Number) {
+                    x = ((Number) xObj).doubleValue();
+                } else if (xObj instanceof String) {
+                    x = Double.parseDouble((String) xObj);
+                }
+                
+                if (yObj instanceof Number) {
+                    y = ((Number) yObj).doubleValue();
+                } else if (yObj instanceof String) {
+                    y = Double.parseDouble((String) yObj);
+                }
+                
+                if (x != null && y != null) {
                     GeoDistanceSortBuilder geoSort = SortBuilders.geoDistanceSort("location", y, x) // lat,lon 순서
-                        .order(order)
+                        .order(SortOrder.ASC) // 거리는 항상 가까운 순으로 정렬
                         .unit(org.elasticsearch.common.unit.DistanceUnit.KILOMETERS);
                     searchSourceBuilder.sort(geoSort);
                 }
-                break;
-            case "name":
-                searchSourceBuilder.sort("yadmNm.keyword", order);
-                break;
-            case "region":
-                searchSourceBuilder.sort("region.keyword", order);
-                break;
-            default:
-                searchSourceBuilder.sort("_score", order);
-                break;
+            } catch (NumberFormatException e) {
+                logger.warn("위치 좌표 파싱 실패 - x: {}, y: {}", xObj, yObj);
+            }
+        } else {
+            switch (sortBy.toLowerCase()) {
+                case "distance":
+                    // 위치 정보가 없으면 거리 정렬 불가
+                    searchSourceBuilder.sort("_score", order);
+                    break;
+                case "name":
+                    searchSourceBuilder.sort("yadmNm.keyword", order);
+                    break;
+                case "region":
+                    searchSourceBuilder.sort("region.keyword", order);
+                    break;
+                default:
+                    searchSourceBuilder.sort("_score", order);
+                    break;
+            }
         }
     }
     
@@ -375,9 +423,16 @@ public class HospitalSearchService {
             hospital.put("score", hit.getScore());
             
             // 거리 정보 추가 (위치 기반 검색인 경우)
-            if (searchParams.containsKey("latitude") && searchParams.containsKey("longitude") && hit.getSortValues().length > 0) {
+            if ((searchParams.containsKey("latitude") && searchParams.containsKey("longitude") || 
+                 searchParams.containsKey("x") && searchParams.containsKey("y")) && hit.getSortValues().length > 0) {
                 Object distance = hit.getSortValues()[0];
-                hospital.put("distance", distance);
+                // 거리 값을 미터 단위로 변환 (Elasticsearch는 km 단위로 반환)
+                if (distance instanceof Number) {
+                    double distanceKm = ((Number) distance).doubleValue();
+                    hospital.put("distance", Math.round(distanceKm * 1000)); // km를 미터로 변환
+                } else {
+                    hospital.put("distance", distance);
+                }
             }
             
             hospitals.add(hospital);
@@ -386,45 +441,115 @@ public class HospitalSearchService {
         Map<String, Object> result = new HashMap<>();
         result.put("data", hospitals);
         result.put("totalCount", hits.getTotalHits().value);
-        result.put("currentPage", searchParams.containsKey("page") ? Integer.parseInt(searchParams.get("page").toString()) : 1);
-        result.put("totalPages", searchParams.containsKey("limit") ? (int) Math.ceil((double) hits.getTotalHits().value / Integer.parseInt(searchParams.get("limit").toString())) : 1);
+        
+        // 페이지네이션 정보 설정
+        int page = searchParams.containsKey("page") ? Integer.parseInt(searchParams.get("page").toString()) : 1;
+        int limit = searchParams.containsKey("limit") ? Integer.parseInt(searchParams.get("limit").toString()) : 10;
+        result.put("currentPage", page);
+        result.put("totalPages", (int) Math.ceil((double) hits.getTotalHits().value / limit));
         result.put("maxScore", hits.getMaxScore());
         
-        // 집계 결과 추가
+        // 집계 결과를 안전하게 처리하여 추가
         if (response.getAggregations() != null) {
             Map<String, Object> aggregations = new HashMap<>();
             
-            // 지역별 집계
-            if (response.getAggregations().get("regions") != null) {
-                aggregations.put("regions", response.getAggregations().get("regions"));
+            try {
+                // 지역별 집계
+                if (response.getAggregations().get("regions") != null) {
+                    aggregations.put("regions", processTermsAggregation(response.getAggregations().get("regions")));
+                }
+                
+                // 카테고리별 집계
+                if (response.getAggregations().get("categories") != null) {
+                    aggregations.put("categories", processTermsAggregation(response.getAggregations().get("categories")));
+                }
+                
+                // 전문과목별 집계
+                if (response.getAggregations().get("specialities") != null) {
+                    aggregations.put("specialities", processTermsAggregation(response.getAggregations().get("specialities")));
+                }
+                
+                // 거리별 집계
+                if (response.getAggregations().get("distances") != null) {
+                    aggregations.put("distances", processGeoDistanceAggregation(response.getAggregations().get("distances")));
+                }
+                
+                // 응급실 운영 여부 집계
+                if (response.getAggregations().get("emergency_available") != null) {
+                    aggregations.put("emergency_available", processTermsAggregation(response.getAggregations().get("emergency_available")));
+                }
+                
+                // 야간진료 여부 집계
+                if (response.getAggregations().get("night_care_available") != null) {
+                    aggregations.put("night_care_available", processTermsAggregation(response.getAggregations().get("night_care_available")));
+                }
+                
+                result.put("aggregations", aggregations);
+            } catch (Exception e) {
+                logger.warn("집계 결과 처리 중 오류 발생: {}", e.getMessage());
+                // 집계 처리 실패 시 빈 맵으로 설정
+                result.put("aggregations", new HashMap<>());
             }
-            
-            // 카테고리별 집계
-            if (response.getAggregations().get("categories") != null) {
-                aggregations.put("categories", response.getAggregations().get("categories"));
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Terms 집계 결과를 안전하게 처리
+     */
+    private Map<String, Object> processTermsAggregation(Aggregation aggregation) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            if (aggregation instanceof Terms) {
+                Terms terms = (Terms) aggregation;
+                
+                List<Map<String, Object>> buckets = new ArrayList<>();
+                for (Terms.Bucket bucket : terms.getBuckets()) {
+                    Map<String, Object> bucketMap = new HashMap<>();
+                    bucketMap.put("key", bucket.getKeyAsString());
+                    bucketMap.put("doc_count", bucket.getDocCount());
+                    buckets.add(bucketMap);
+                }
+                
+                result.put("buckets", buckets);
+                result.put("doc_count_error_upper_bound", terms.getDocCountError());
+                result.put("sum_other_doc_count", terms.getSumOfOtherDocCounts());
             }
-            
-            // 전문과목별 집계
-            if (response.getAggregations().get("specialities") != null) {
-                aggregations.put("specialities", response.getAggregations().get("specialities"));
+        } catch (Exception e) {
+            logger.warn("Terms 집계 처리 중 오류: {}", e.getMessage());
+            result.put("buckets", new ArrayList<>());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * GeoDistance 집계 결과를 안전하게 처리
+     */
+    private Map<String, Object> processGeoDistanceAggregation(Aggregation aggregation) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            if (aggregation instanceof Range) {
+                Range geoDistance = (Range) aggregation;
+                
+                List<Map<String, Object>> buckets = new ArrayList<>();
+                for (Range.Bucket bucket : geoDistance.getBuckets()) {
+                    Map<String, Object> bucketMap = new HashMap<>();
+                    bucketMap.put("key", bucket.getKeyAsString());
+                    bucketMap.put("from", bucket.getFrom());
+                    bucketMap.put("to", bucket.getTo());
+                    bucketMap.put("doc_count", bucket.getDocCount());
+                    buckets.add(bucketMap);
+                }
+                
+                result.put("buckets", buckets);
             }
-            
-            // 거리별 집계
-            if (response.getAggregations().get("distances") != null) {
-                aggregations.put("distances", response.getAggregations().get("distances"));
-            }
-            
-            // 응급실 운영 여부 집계
-            if (response.getAggregations().get("emergency_available") != null) {
-                aggregations.put("emergency_available", response.getAggregations().get("emergency_available"));
-            }
-            
-            // 야간진료 여부 집계
-            if (response.getAggregations().get("night_care_available") != null) {
-                aggregations.put("night_care_available", response.getAggregations().get("night_care_available"));
-            }
-            
-            result.put("aggregations", aggregations);
+        } catch (Exception e) {
+            logger.warn("GeoDistance 집계 처리 중 오류: {}", e.getMessage());
+            result.put("buckets", new ArrayList<>());
         }
         
         return result;

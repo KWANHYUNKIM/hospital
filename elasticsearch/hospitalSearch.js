@@ -244,10 +244,21 @@ router.get('/', async (req, res) => {
 
     let hits, totalCount;
     if (result && result.hits) {
-      hits = result.hits.hits.map(hit => ({
-        ...hit._source,
-        _id: hit._id,
-      }));
+      hits = result.hits.hits.map(hit => {
+        const hospitalData = {
+          ...hit._source,
+          _id: hit._id,
+        };
+        
+        // 위치 기반 검색인 경우 거리 정보 추가
+        if (x && y && hit.sort && hit.sort.length > 0) {
+          // sort_values의 첫 번째 값이 거리 (km 단위)
+          const distanceInKm = hit.sort[0];
+          hospitalData.distance = Math.round(distanceInKm * 1000); // 미터 단위로 변환
+        }
+        
+        return hospitalData;
+      });
       totalCount = typeof result.hits.total === 'number'
         ? result.hits.total
         : result.hits.total.value;

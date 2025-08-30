@@ -27,8 +27,8 @@ public class BulkIndexService {
     
     private static final Logger logger = LoggerFactory.getLogger(BulkIndexService.class);
     
-    private static final int BATCH_SIZE = 500;
-    private static final int PARALLEL_BATCHES = 5;
+    private static final int BATCH_SIZE = 1000;          // 배치당 1000개로 증가
+    private static final int PARALLEL_BATCHES = 20;      // 병렬 20개 배치로 증가 (1000 * 20 = 20,000개씩 처리)
     private static final int MAX_RETRIES = 10;
     private static final long RETRY_DELAY = 15000;
     private static final int TIME_WINDOW = 5;
@@ -72,13 +72,13 @@ public class BulkIndexService {
                         consecutiveErrors = 0;
                     }
                     
-                    // 커서 기반 페이지네이션
+                    // 커서 기반 페이지네이션 - 더 큰 배치로 처리
                     Query query = new Query();
                     if (lastId != null) {
                         query.addCriteria(Criteria.where("_id").gt(lastId));
                     }
                     query.with(Sort.by(Sort.Direction.ASC, "_id"))
-                         .limit(BATCH_SIZE * PARALLEL_BATCHES);
+                         .limit(BATCH_SIZE * PARALLEL_BATCHES);  // 1000 * 20 = 20,000개씩 처리
                     
                     List<Map> hospitals = mongoTemplate.find(query, Map.class, "hospitals");
                     
@@ -88,13 +88,14 @@ public class BulkIndexService {
                     
                     List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
                     
-                    // 병렬 배치 처리
-                    for (int i = 0; i < PARALLEL_BATCHES; i++) {
-                        int currentIndex = i * BATCH_SIZE;
-                        if (currentIndex >= hospitals.size()) break;
-                        
-                        int endIndex = Math.min(currentIndex + BATCH_SIZE, hospitals.size());
+                    // 병렬 배치 처리 - 더 효율적으로
+                    int actualBatchSize = Math.max(BATCH_SIZE, hospitals.size() / PARALLEL_BATCHES);
+                    for (int i = 0; i < PARALLEL_BATCHES && i * actualBatchSize < hospitals.size(); i++) {
+                        int currentIndex = i * actualBatchSize;
+                        int endIndex = Math.min(currentIndex + actualBatchSize, hospitals.size());
                         List<Map> batch = hospitals.subList(currentIndex, endIndex);
+                        
+                        if (batch.isEmpty()) break;
                         
                         final int currentBatchNumber = batchCount + i + 1;
                         CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {

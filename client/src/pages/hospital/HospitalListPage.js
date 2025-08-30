@@ -104,13 +104,13 @@ const filterMajor = [
 ];
 
 const filterAdditionFilters = [
-  //{ label: "전체", icon: "📌" },
-  // { label: "영업중", icon: "🏥" },
+  { label: "전체", icon: "📌" },
+  { label: "영업중", icon: "🏥" },
 ];
 
 const additionalFilters = [
-  //{ label: "전체", icon: "📌" },
-  // { label: "영업중", icon: "🏥" },
+  { label: "전체", icon: "📌" },
+  { label: "영업중", icon: "🏥" },
 ];
 
 const HospitalListPage = () => {
@@ -155,7 +155,7 @@ const HospitalListPage = () => {
     { name: "지역", options: filterRegions, state: selectedRegion, setState: setSelectedRegion },
     { name: "타입", options: filterSubjects, state: selectedSubject, setState: setSelectedSubject },
     { name: "전공", options: filterMajor, state: selectedMajor, setState: setSelectedMajor },
-    //{ name: "진료시간", options: filterAdditionFilters, state: selectedAdditionalFilter, setState: setSelectedAdditionalFilter },
+    { name: "진료시간", options: additionalFilters, state: selectedAdditionalFilter, setState: setSelectedAdditionalFilter },
   ];
   
   const handleFilterChange = (categoryName, option) => {
@@ -188,8 +188,6 @@ const HospitalListPage = () => {
     const params = new URLSearchParams(window.location.search);
     const category = params.get("category");
     const query = params.get("query");
-    const x = params.get("x");
-    const y = params.get("y");
 
     if (category) {
       setSelectedAdditionalFilter(category);
@@ -199,21 +197,8 @@ const HospitalListPage = () => {
 
     if (query) {
       setSearchQuery(query);
-      setLocationBased(false);
     } else {
       setSearchQuery("");
-    }
-
-    if (x && y) {
-      setUserLocation({ x: parseFloat(x), y: parseFloat(y) });
-      setLocationBased(true);
-      // 선택된 필터 초기화
-      setSelectedRegion("전국");
-      setSelectedSubject("전체");
-      setSelectedMajor("전체");
-      setSelectedAdditionalFilter("전체");
-    } else {
-      setLocationBased(false);
     }
 
     setInitialized(true);
@@ -261,7 +246,7 @@ const HospitalListPage = () => {
       } else if (selectedAdditionalFilter === "응급주말진료") {
         params.category = "응급주말진료";
       } else if (selectedAdditionalFilter === "영업중") {
-        params.category = "영업중";
+        params.operating = "true"; // 영업중 필터 파라미터 추가
       }
     
       const response = await fetchHospitals(params);
@@ -323,6 +308,40 @@ const HospitalListPage = () => {
     }
   };
 
+  const handleLocationSearch = () => {
+    // 이미 위치 기반 검색이 활성화되어 있으면 비활성화
+    if (locationBased) {
+      setLocationBased(false);
+      setUserLocation({ x: null, y: null });
+      setCurrentPage(1);
+      fetchHospitalsFromServer();
+      return;
+    }
+    
+    // 위치 기반 검색 활성화
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({ x: position.coords.longitude, y: position.coords.latitude });
+          setLocationBased(true);
+          setSelectedRegion("전국"); // 위치 기반 검색은 지역 필터를 무시하거나 전국으로 고정
+          setSelectedSubject("전체");
+          setSelectedMajor("전체");
+          setSelectedAdditionalFilter("전체");
+          setSearchQuery(""); // 검색어 초기화
+          setCurrentPage(1);
+          fetchHospitalsFromServer();
+        },
+        (error) => {
+          console.error("Error getting user location:", error);
+          alert("위치 정보를 가져올 수 없습니다. 검색을 계속하려면 허용해주세요.");
+        }
+      );
+    } else {
+      alert("이 브라우저는 위치 정보를 지원하지 않습니다.");
+    }
+  };
+
   return (
     <div className="sticky top-16 z-50 bg-gray-50">
       {/* 헤더 */}
@@ -338,7 +357,31 @@ const HospitalListPage = () => {
           )}
           {/* 위치 기반 검색 표시 */}
           {locationBased && userLocation.x !== null && userLocation.y !== null && (
-            <p className="text-md mt-1">내 주변 병원 검색 중...</p>
+            <div className="flex items-center gap-3 mt-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
+              <span className="text-sm font-medium">📍 내 주변 검색</span>
+              <button
+                onClick={handleLocationSearch}
+                className={`relative w-12 h-6 rounded-full transition-all duration-300 flex items-center justify-center shadow-sm border border-white/50 ${
+                  locationBased
+                    ? 'bg-white/90'
+                    : 'bg-white/70 hover:bg-white/90'
+                } hover:scale-105 active:scale-95`}
+              >
+                <div
+                  className={`absolute w-4 h-4 bg-blue-500 rounded-full shadow-md transition-all duration-300 transform ${
+                    locationBased ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+                <span className={`text-xs font-bold transition-all duration-300 ${
+                  locationBased ? 'text-blue-600' : 'text-transparent'
+                }`}>
+                  {locationBased ? 'ON' : 'OFF'}
+                </span>
+              </button>
+              <span className="text-xs text-white/80">
+                반경: {selectedDistance/1000}km
+              </span>
+            </div>
           )}
         </div>
       </header>
@@ -382,6 +425,38 @@ const HospitalListPage = () => {
                 <span className="font-medium">{filter.label}</span>
               </button>
             ))}
+          </div>
+          
+          {/* 내위치 토글 - 오른쪽 끝에 배치 */}
+          <div className="flex justify-end mt-4">
+            <div className="flex flex-col items-center gap-3">
+              <button
+                onClick={handleLocationSearch}
+                className={`relative w-16 h-8 rounded-full transition-all duration-300 flex items-center justify-center shadow-sm border-2 ${
+                  locationBased
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 border-blue-400 shadow-blue-200/50'
+                    : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                } hover:scale-105 active:scale-95`}
+              >
+                <div
+                  className={`absolute w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300 transform ${
+                    locationBased ? 'translate-x-8' : 'translate-x-1'
+                  }`}
+                />
+                <span className={`text-xs font-bold transition-all duration-300 ${
+                  locationBased ? 'text-white' : 'text-transparent'
+                }`}>
+                  {locationBased ? 'ON' : 'OFF'}
+                </span>
+              </button>
+              
+              {/* 위치 기반 검색 상태를 직관적으로 표현 */}
+              <span className={`text-xs font-medium transition-all duration-300 ${
+                locationBased ? 'text-blue-600 font-semibold' : 'text-gray-500'
+              }`}>
+                {locationBased ? '📍 주변 검색' : '🌍 전체 검색'}
+              </span>
+            </div>
           </div>
         </section>
 
@@ -474,7 +549,13 @@ const HospitalListPage = () => {
                         </div>
 
                         {/* 거리 정보 */}
-                        <DistanceInfo hospitalLocation={hospital.location} />
+                        {hospital.distance ? (
+                          <div className="mt-1 text-sm text-blue-600 font-medium">
+                            📍 내 주변 {Math.round(hospital.distance)}m
+                          </div>
+                        ) : (
+                          <DistanceInfo hospitalLocation={hospital.location} />
+                        )}
 
                         {/* 진료과 정보 (컴포넌트 사용) */}
                         <HospitalMajorList majors={hospital.major || []} />
