@@ -345,7 +345,7 @@ const HospitalListPage = () => {
   return (
     <div className="sticky top-16 z-50 bg-gray-50">
       {/* 헤더 */}
-      <header className="bg-gradient-to-r from-blue-400 to-purple-500 text-white p-6 shadow-md">
+      <header className="bg-gradient-to-r from-blue-400 to-purple-500 text-white p-6 shadow-md relative min-h-[140px]">
         <div className="container mx-auto flex flex-col items-center">
           <h1 className="text-2xl font-bold">삐뽀삐뽀119</h1>
           <p className="text-lg mt-2">선택한 지역의 병원을 쉽게 찾아보세요</p>
@@ -355,9 +355,9 @@ const HospitalListPage = () => {
               검색어: <strong>{searchQuery}</strong>
             </p>
           )}
-          {/* 위치 기반 검색 표시 */}
+          {/* 위치 기반 검색 표시 - 절대 위치로 배치하여 레이아웃 변화 방지 */}
           {locationBased && userLocation.x !== null && userLocation.y !== null && (
-            <div className="flex items-center gap-3 mt-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-3 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
               <span className="text-sm font-medium">📍 내 주변 검색</span>
               <button
                 onClick={handleLocationSearch}
