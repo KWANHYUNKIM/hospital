@@ -23,10 +23,15 @@ public class EmailController {
         }
 
         try {
-            emailService.sendVerificationEmail(email);
-            return ResponseEntity.ok(new MessageResponse("인증 코드가 이메일로 전송되었습니다."));
+            Map<String, Object> result = emailService.sendVerificationEmail(email);
+            
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok(new MessageResponse((String) result.get("message")));
+            } else {
+                return ResponseEntity.badRequest().body(new MessageResponse((String) result.get("message")));
+            }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+            return ResponseEntity.badRequest().body(new MessageResponse("이메일 전송 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
 

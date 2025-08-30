@@ -1,5 +1,7 @@
 package com.bippobippo.hospital.service.bus;
 
+// Kafka 관련 클래스 - 개발 전단계로 주석처리
+/*
 import com.bippobippo.hospital.model.bus.BusLocation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,4 +51,5 @@ public class BusLocationKafkaProducer {
             ex -> log.error("가공된 버스 위치 데이터 전송 실패: {}", ex.getMessage())
         );
     }
-} 
+}
+*/ 

@@ -30,11 +30,20 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {
             authService.register(request);
-            return ResponseEntity.status(201).body(new MessageResponse("회원가입이 완료되었습니다."));
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "회원가입이 완료되었습니다.");
+            return ResponseEntity.status(201).body(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(new MessageResponse("서버 오류가 발생했습니다."));
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "서버 오류가 발생했습니다.");
+            return ResponseEntity.status(500).body(response);
         }
     }
 

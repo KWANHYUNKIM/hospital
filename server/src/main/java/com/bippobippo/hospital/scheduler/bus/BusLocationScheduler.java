@@ -4,7 +4,7 @@ import com.bippobippo.hospital.model.bus.BusLocation;
 import com.bippobippo.hospital.model.bus.BusRoute;
 import com.bippobippo.hospital.service.bus.BusLocationService;
 import com.bippobippo.hospital.service.bus.BusRouteService;
-import com.bippobippo.hospital.service.bus.BusLocationKafkaProducer;
+// import com.bippobippo.hospital.service.bus.BusLocationKafkaProducer;
 import com.bippobippo.hospital.service.bus.BusRouteTrackingService;
 import com.bippobippo.hospital.websocket.BusLocationWebSocketHandler;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ import org.springframework.scheduling.annotation.Async;
 public class BusLocationScheduler {
     private final BusLocationService busLocationService;
     private final BusRouteService busRouteService;
-    private final BusLocationKafkaProducer kafkaProducer;
+    // private final BusLocationKafkaProducer kafkaProducer;
     private final BusLocationWebSocketHandler webSocketHandler;
     private final BusRouteTrackingService busRouteTrackingService;
 
@@ -394,10 +394,10 @@ public class BusLocationScheduler {
             }
             
             if (!locations.isEmpty()) {
-                // Kafka로 원본 데이터 전송 (비동기 처리)
-                kafkaProducer.sendBusLocationBatch(route.getRouteId(), locations);
+                // Kafka로 원본 데이터 전송 (비동기 처리) - 주석처리
+                // kafkaProducer.sendBusLocationBatch(route.getRouteId(), locations);
                 
-                log.debug("노선 {} ({}) 버스 위치 {}건 Kafka 전송 완료", 
+                log.debug("노선 {} ({}) 버스 위치 {}건 수집 완료 (Kafka 전송 비활성화)", 
                     route.getRouteId(), route.getRouteNo(), locations.size());
             }
             

@@ -53,40 +53,47 @@ public class AutoIndexingService {
     public void initialize() {
         logger.info("🚀 자동 색인 서비스 초기화 시작...");
         
-        // 초기 동기화 실행
+        // 서버 시작 시 한 번만 초기 동기화 실행
         CompletableFuture.runAsync(() -> {
             try {
+                logger.info("🔄 서버 시작 시 초기 동기화 실행...");
                 performInitialSync();
+                logger.info("✅ 서버 시작 시 초기 동기화 완료!");
             } catch (Exception e) {
-                logger.error("초기 동기화 중 오류 발생:", e);
+                logger.error("❌ 서버 시작 시 초기 동기화 중 오류 발생:", e);
             }
         }, executorService);
     }
     
     /**
-     * 초기 동기화 수행
+     * 초기 동기화 수행 (서버 시작 시 한 번만)
      */
     private void performInitialSync() {
-        logger.info("🔄 초기 동기화 시작...");
+        logger.info("🔄 서버 시작 시 초기 동기화 시작...");
         
         try {
             // 각 인덱스별로 초기 동기화 수행
+            logger.info("🏥 병원 데이터 초기 동기화 시작...");
             syncHospitalsIfNeeded();
+            
+            logger.info("💊 약국 데이터 초기 동기화 시작...");
             syncPharmaciesIfNeeded();
+            
+            logger.info("🗺️ 지도 데이터 초기 동기화 시작...");
             syncMapDataIfNeeded();
             
-            logger.info("✅ 초기 동기화 완료!");
+            logger.info("✅ 서버 시작 시 초기 동기화 완료!");
         } catch (Exception e) {
-            logger.error("❌ 초기 동기화 중 오류 발생:", e);
+            logger.error("❌ 서버 시작 시 초기 동기화 중 오류 발생:", e);
         }
     }
     
     /**
-     * 정기적인 동기화 체크 (5분마다)
+     * 일일 동기화 체크 (매일 자정에 실행)
      */
-    @Scheduled(fixedRate = 300000) // 5분 = 300,000ms
-    public void scheduledSyncCheck() {
-        logger.debug("⏰ 정기 동기화 체크 시작...");
+    @Scheduled(cron = "0 0 0 * * ?") // 매일 자정
+    public void dailySyncCheck() {
+        logger.info("🌅 일일 동기화 체크 시작...");
         
         try {
             // 병원 데이터 동기화 체크
@@ -105,12 +112,12 @@ public class AutoIndexingService {
             }
             
         } catch (Exception e) {
-            logger.error("❌ 정기 동기화 체크 중 오류 발생:", e);
+            logger.error("❌ 일일 동기화 체크 중 오류 발생:", e);
         }
     }
     
     /**
-     * 병원 데이터 자동 동기화
+     * 병원 데이터 자동 동기화 (서버 시작 시 + 일일)
      */
     public void syncHospitalsIfNeeded() {
         if (syncInProgress.getOrDefault("hospitals", false)) {
@@ -152,7 +159,7 @@ public class AutoIndexingService {
     }
     
     /**
-     * 약국 데이터 자동 동기화
+     * 약국 데이터 자동 동기화 (서버 시작 시 + 일일)
      */
     public void syncPharmaciesIfNeeded() {
         if (syncInProgress.getOrDefault("pharmacies", false)) {
@@ -193,7 +200,7 @@ public class AutoIndexingService {
     }
     
     /**
-     * 지도 데이터 자동 동기화
+     * 지도 데이터 자동 동기화 (서버 시작 시 + 일일)
      */
     public void syncMapDataIfNeeded() {
         if (syncInProgress.getOrDefault("map", false)) {

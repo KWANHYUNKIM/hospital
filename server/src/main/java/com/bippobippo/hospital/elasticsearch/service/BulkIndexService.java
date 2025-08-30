@@ -470,8 +470,96 @@ public class BulkIndexService {
      * 약국 데이터 벌크 색인
      */
     public void bulkPharmaciesIndex() throws IOException {
-        // TODO: 구현 필요
-        logger.info("약국 데이터 벌크 색인 - 구현 예정");
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            logger.info("🚀 약국 데이터 벌크 색인 시작...");
+            
+            // MongoDB에서 약국 데이터 조회
+            List<Map> pharmacies = mongoTemplate.find(new Query(), Map.class, "pharmacies");
+            logger.info("총 {}개의 약국 데이터를 처리합니다.", pharmacies.size());
+            
+            if (pharmacies.isEmpty()) {
+                logger.info("⚠️ 색인할 약국 데이터가 없습니다.");
+                return;
+            }
+            
+            // 배치 크기 설정
+            int batchSize = 500;
+            int totalProcessed = 0;
+            
+            for (int i = 0; i < pharmacies.size(); i += batchSize) {
+                int endIndex = Math.min(i + batchSize, pharmacies.size());
+                List<Map> batch = pharmacies.subList(i, endIndex);
+                
+                BulkRequest bulkRequest = new BulkRequest();
+                
+                for (Map pharmacy : batch) {
+                    try {
+                        // 약국 데이터 생성
+                        Map<String, Object> pharmacyData = new HashMap<>();
+                        
+                        pharmacyData.put("ykiho", pharmacy.get("ykiho"));
+                        pharmacyData.put("yadmNm", pharmacy.get("yadmNm"));
+                        pharmacyData.put("clCd", pharmacy.get("clCd"));
+                        pharmacyData.put("clCdNm", pharmacy.get("clCdNm"));
+                        pharmacyData.put("sidoCd", pharmacy.get("sidoCd"));
+                        pharmacyData.put("sidoCdNm", pharmacy.get("sidoCdNm"));
+                        pharmacyData.put("sgguCd", pharmacy.get("sgguCd"));
+                        pharmacyData.put("sgguCdNm", pharmacy.get("sgguCdNm"));
+                        pharmacyData.put("emdongNm", pharmacy.get("emdongNm"));
+                        pharmacyData.put("postNo", pharmacy.get("postNo"));
+                        pharmacyData.put("addr", pharmacy.get("addr"));
+                        pharmacyData.put("telno", pharmacy.get("telno"));
+                        pharmacyData.put("estbDd", pharmacy.get("estbDd"));
+                        
+                        // 위치 정보
+                        if (pharmacy.get("Ypos") != null && pharmacy.get("Xpos") != null) {
+                            Map<String, Double> location = new HashMap<>();
+                            location.put("lat", (Double) pharmacy.get("Ypos"));
+                            location.put("lon", (Double) pharmacy.get("Xpos"));
+                            pharmacyData.put("location", location);
+                        }
+                        
+                        // IndexRequest 생성 및 BulkRequest에 추가
+                        IndexRequest indexRequest = new IndexRequest("pharmacies")
+                            .id(pharmacyData.get("ykiho").toString())
+                            .source(pharmacyData, XContentType.JSON);
+                        
+                        bulkRequest.add(indexRequest);
+                        
+                    } catch (Exception e) {
+                        logger.error("약국 데이터 처리 중 오류: {}", pharmacy.get("ykiho"), e);
+                    }
+                }
+                
+                // Bulk 요청 실행
+                BulkResponse response = elasticsearchClient.bulk(bulkRequest, org.elasticsearch.client.RequestOptions.DEFAULT);
+                if (response.hasFailures()) {
+                    logger.error("배치 {}에서 일부 문서 색인 실패", (i / batchSize) + 1);
+                }
+                
+                totalProcessed += batch.size();
+                double progress = (double) totalProcessed / pharmacies.size() * 100;
+                logger.info("📊 진행 상황: {}/{} ({}%)", totalProcessed, pharmacies.size(), Math.round(progress));
+                
+                // 배치 처리 후 잠시 대기
+                Thread.sleep(1000);
+            }
+            
+            // 인덱스 새로고침
+            RefreshRequest refreshRequest = new RefreshRequest("pharmacies");
+            elasticsearchClient.indices().refresh(refreshRequest, org.elasticsearch.client.RequestOptions.DEFAULT);
+            
+            double totalTime = (System.currentTimeMillis() - startTime) / 1000.0;
+            logger.info("✅ 약국 데이터 색인 완료! 총 소요시간: {}초", String.format("%.2f", totalTime));
+            logger.info("📈 평균 처리 속도: {} 문서/초", 
+                String.format("%.2f", pharmacies.size() / totalTime));
+                
+        } catch (Exception e) {
+            logger.error("❌ 약국 데이터 벌크 색인 중 오류 발생:", e);
+            throw new RuntimeException("약국 데이터 벌크 색인 실패", e);
+        }
     }
     
     /**

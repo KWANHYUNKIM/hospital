@@ -82,6 +82,9 @@ public class SecurityConfig {
             .antMatchers("/api/hospital/suggest-operating-time").permitAll()
             .antMatchers("/api/hospital/suggestions/**").hasRole("ADMIN")
 
+            // 이메일 인증 API - 모든 사용자 허용 (회원가입용)
+            .antMatchers("/api/email/**").permitAll()
+
             // 기타 모든 API의 GET 요청 허용
             .antMatchers(HttpMethod.GET, "/api/**").permitAll()
 

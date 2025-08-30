@@ -1,7 +1,7 @@
 package com.bippobippo.hospital.impl.user;
 
 import com.bippobippo.hospital.service.user.UserService;
-// import com.bippobippo.hospital.service.common.GoogleCloudStorageService;
+import com.bippobippo.hospital.service.common.ImageStorageService;
 import com.bippobippo.hospital.dto.request.user.RegisterRequest;
 import com.bippobippo.hospital.dto.request.user.ProfileUpdateRequest;
 import com.bippobippo.hospital.entity.user.Role;
@@ -28,7 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    // private final GoogleCloudStorageService gcsService;
+    private final ImageStorageService imageStorageService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -159,12 +159,11 @@ public class UserServiceImpl implements UserService {
             // 프로필 이미지 업데이트
             if (profileImage != null && !profileImage.isEmpty()) {
                 try {
-                    log.info("프로필 이미지 업데이트 - 파일명: {}", profileImage.getOriginalFilename());
-                    // Google Cloud Storage 비활성화로 인해 더미 URL 반환
-                    String imageUrl = "storage_disabled_" + profileImage.getOriginalFilename();
-                    user.setProfileImage(imageUrl);
-                    log.warn("Google Cloud Storage가 비활성화되어 더미 URL을 사용합니다: {}", imageUrl);
-                } catch (RuntimeException e) {
+                    log.info("프로필 이미지 업로드 시작 - 파일명: {}", profileImage.getOriginalFilename());
+                    String imageFileName = imageStorageService.uploadProfileImage(profileImage);
+                    user.setProfileImage(imageFileName);
+                    log.info("프로필 이미지 업로드 완료 - 저장된 파일명: {}", imageFileName);
+                } catch (Exception e) {
                     log.error("프로필 이미지 업로드 중 오류 발생", e);
                     throw new RuntimeException("프로필 이미지 업로드 중 오류가 발생했습니다.", e);
                 }

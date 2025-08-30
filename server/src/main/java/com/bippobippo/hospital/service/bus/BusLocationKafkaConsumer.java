@@ -1,5 +1,7 @@
 package com.bippobippo.hospital.service.bus;
 
+// Kafka 관련 클래스 - 개발 전단계로 주석처리
+/*
 import com.bippobippo.hospital.model.bus.BusLocation;
 import com.bippobippo.hospital.websocket.BusLocationWebSocketHandler;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,7 @@ public class BusLocationKafkaConsumer {
             @Payload BusLocation location,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
-            @Header(KafkaHeaders.OFFSET) long offset) {
+            @Header(KafkaHeaders.RECEIVED_OFFSET) long offset) {
         
         try {
             log.debug("버스 위치 데이터 수신: {} (partition: {}, offset: {})", 
@@ -55,7 +57,7 @@ public class BusLocationKafkaConsumer {
             @Payload Object processedData,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
-            @Header(KafkaHeaders.OFFSET) long offset) {
+            @Header(KafkaHeaders.RECEIVED_OFFSET) long offset) {
         
         try {
             log.info("가공된 버스 위치 데이터 수신: {} (partition: {}, offset: {})", 
@@ -68,4 +70,5 @@ public class BusLocationKafkaConsumer {
             log.error("가공된 버스 위치 데이터 처리 실패: {}", e.getMessage(), e);
         }
     }
-} 
+}
+*/ 

@@ -21,7 +21,9 @@ public class MongoConfig {
 
     @Bean
     public MongoTemplate mongoTemplate() {
-        return new MongoTemplate(mongoClient(), "horoscope_db");
+        // URI에서 데이터베이스 이름 추출
+        String dbName = mongoUri.substring(mongoUri.lastIndexOf("/") + 1);
+        return new MongoTemplate(mongoClient(), dbName);
     }
 
     @Bean

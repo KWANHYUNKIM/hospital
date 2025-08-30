@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { fetchUserProfile, updateUserProfile } from '../../service/profileApi';
+import ProfileImage from '../../components/common/ProfileImage';
 
 const ProfilePage = () => {
   const { userId, username } = useAuth();
@@ -28,20 +29,9 @@ const ProfilePage = () => {
     '소화기질환', '피부질환', '정신건강', '영양', '운동', '건강검진'
   ];
 
-  // 랜덤 색상 생성 함수
-  const getRandomColor = (username) => {
-    const colors = [
-      'bg-red-500', 'bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 
-      'bg-blue-500', 'bg-cyan-500', 'bg-teal-500', 'bg-green-500',
-      'bg-yellow-500', 'bg-orange-500'
-    ];
-    const index = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-    return colors[index];
-  };
-
-  // 사용자 이니셜 가져오기
-  const getInitials = (username) => {
-    return username ? username.charAt(0).toUpperCase() : '?';
+  // API URL 가져오기
+  const getApiUrl = () => {
+    return process.env.REACT_APP_API_URL || 'http://localhost:3002';
   };
 
   useEffect(() => {
@@ -89,6 +79,7 @@ const ProfilePage = () => {
       setProfileImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log('Preview URL:', reader.result); // 로그 추가
         setPreviewUrl(reader.result);
       };
       reader.readAsDataURL(file);
@@ -181,21 +172,19 @@ const ProfilePage = () => {
             <div className="flex items-center space-x-4">
               <div className="relative">
                 {previewUrl ? (
-                  <img
-                    src={previewUrl}
-                    alt="프로필 이미지"
-                    className="w-24 h-24 rounded-full object-cover"
-                  />
-                ) : profile.profile_image ? (
-                  <img
-                    src={profile.profile_image}
-                    alt="프로필 이미지"
-                    className="w-24 h-24 rounded-full object-cover"
+                  <ProfileImage
+                    imagePath={previewUrl}
+                    username={profile.username}
+                    size="xl"
+                    showBorder={false}
                   />
                 ) : (
-                  <div className={`w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-semibold ${getRandomColor(profile.username)}`}>
-                    {getInitials(profile.username)}
-                  </div>
+                  <ProfileImage
+                    imagePath={profile.profile_image}
+                    username={profile.username}
+                    size="xl"
+                    showBorder={false}
+                  />
                 )}
                 <label className="absolute bottom-0 right-0 bg-blue-500 text-white p-1 rounded-full cursor-pointer hover:bg-blue-600">
                   <input

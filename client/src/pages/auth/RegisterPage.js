@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../../contexts/AuthContext';
-import { getApiUrl } from '../../utils/api';
 import { api } from '../../utils/api';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation(); 
   const socialData = location.state?.socialData;
-  const provider = location.state?.provider;
 
   const [formData, setFormData] = useState({
     username: '',
@@ -20,16 +16,15 @@ const RegisterPage = () => {
     realName: '',
     nickname: '',
     interests: [],
-    social_provider: '',
-    social_id: '',
-    is_email_verified: false,
-    profile_image: ''
+    socialProvider: '',
+    socialId: '',
+    isEmailVerified: false,
+    profileImage: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isVerificationSent, setIsVerificationSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
   const [remainingTime, setRemainingTime] = useState(180); // 3분 = 180초
   const [validationErrors, setValidationErrors] = useState({
     username: '',
@@ -59,18 +54,18 @@ const RegisterPage = () => {
   useEffect(() => {
     // 소셜 로그인 데이터가 있는 경우 필드 자동 채우기
     if (location.state?.socialLoginData) {
-      const { email, profile_image, social_id, provider, name, given_name } = location.state.socialLoginData;
+      const { email, profileImage, socialId, name, given_name } = location.state.socialLoginData;
       
       console.log('소셜 로그인 데이터:', location.state.socialLoginData); // 디버깅용 로그
 
       setFormData(prev => ({
         ...prev,
         email,
-        profile_image: profile_image || '',
-        social_id,
-        social_provider: provider,
-        is_email_verified: true,
-        realName: provider === 'google' ? `${given_name} ${name}` : '',
+        profileImage: profileImage || '',
+        socialId,
+        socialProvider: location.state?.provider || '',
+        isEmailVerified: true,
+        realName: location.state?.provider === 'google' ? `${given_name} ${name}` : '',
         interests: [],
         username: '', // 사용자가 직접 입력하도록 비워둠
         password: '', // 사용자가 직접 입력하도록 비워둠
@@ -137,6 +132,9 @@ const RegisterPage = () => {
           error = '닉네임은 최대 20자까지 가능합니다.';
         }
         break;
+      default:
+        // 알 수 없는 필드명인 경우 오류 없음
+        break;
     }
     setValidationErrors(prev => ({
       ...prev,
@@ -167,9 +165,7 @@ const RegisterPage = () => {
   const handleSendVerification = async () => {
     try {
       // 이메일 중복 확인
-      const checkResponse = await axios.get(`${getApiUrl()}/api/auth/check-email?email=${formData.email}`, {
-        withCredentials: true
-      });
+      const checkResponse = await api.get(`/api/auth/check-email?email=${formData.email}`);
 
       if (checkResponse.data.exists) {
         setError('이미 가입된 이메일입니다. 다른 이메일을 사용해주세요.');
@@ -177,7 +173,7 @@ const RegisterPage = () => {
       }
 
       // 이메일 인증 코드 전송
-      const response = await axios.post(`${getApiUrl()}/api/email/send-verification`, {
+      await api.post('/api/email/send-verification', {
         email: formData.email
       });
 
@@ -218,7 +214,7 @@ const RegisterPage = () => {
 
   const handleVerifyCode = async () => {
     try {
-      const response = await axios.post(`${getApiUrl()}/api/email/verify-email`, {
+      await api.post('/api/email/verify-email', {
         email: formData.email,
         verificationCode: formData.verificationCode
       });
@@ -253,10 +249,10 @@ const RegisterPage = () => {
         email: formData.email,
         nickname: formData.nickname,
         interests: interestsJson,
-        social_id: formData.social_id || null,
-        social_provider: formData.social_provider || null,
-        is_email_verified: formData.social_provider ? 1 : (formData.is_email_verified ? 1 : 0),
-        profile_image: formData.profile_image || null
+        socialId: formData.socialId || null,
+        socialProvider: formData.socialProvider || null,
+        isEmailVerified: formData.socialProvider ? 1 : (formData.isEmailVerified ? 1 : 0),
+        profileImage: formData.profileImage || null
       };
 
       console.log('회원가입 요청 데이터:', registerData); // 디버깅용 로그

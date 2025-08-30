@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { logout } from '../../utils/api';
 import { getApiUrl } from '../../utils/api';
+import ProfileImage from './ProfileImage';
 
 const NavigationBar = () => {
   const { user, userProfileImage, logout } = useAuth();
@@ -29,6 +30,11 @@ const NavigationBar = () => {
         ? 'border-indigo-500 text-indigo-600 font-semibold'
         : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
     }`;
+  };
+
+  // API URL 가져오기
+  const getApiUrl = () => {
+    return process.env.REACT_APP_API_URL || 'http://localhost:3002';
   };
 
   // 랜덤 색상 생성 함수
@@ -89,15 +95,21 @@ const NavigationBar = () => {
                     className="flex items-center space-x-3 focus:outline-none"
                   >
                     {userProfileImage ? (
-                      <img
-                        src={userProfileImage.startsWith('http') ? userProfileImage : `${getApiUrl()}${userProfileImage}`}
-                        alt="프로필"
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 hover:border-indigo-500 transition-colors duration-200"
+                      <ProfileImage
+                        imagePath={userProfileImage}
+                        username={user.username}
+                        size="md"
+                        showBorder={true}
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                       />
                     ) : (
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${getRandomColor(user.username)}`}>
-                        {getInitials(user.username)}
-                      </div>
+                      <ProfileImage
+                        imagePath={null}
+                        username={user.username}
+                        size="md"
+                        showBorder={true}
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      />
                     )}
                   </button>
                   
@@ -182,15 +194,19 @@ const NavigationBar = () => {
               <>
                 <div className="flex items-center px-5">
                   {userProfileImage ? (
-                    <img
-                      src={userProfileImage.startsWith('http') ? userProfileImage : `${getApiUrl()}${userProfileImage}`}
-                      alt="프로필"
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                    <ProfileImage
+                      imagePath={userProfileImage}
+                      username={user.username}
+                      size="md"
+                      showBorder={true}
                     />
                   ) : (
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${getRandomColor(user.username)}`}>
-                      {getInitials(user.username)}
-                    </div>
+                    <ProfileImage
+                      imagePath={null}
+                      username={user.username}
+                      size="md"
+                      showBorder={true}
+                    />
                   )}
                   <div className="ml-3">
                     <div className="text-base font-medium text-gray-800">{user.username}</div>

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "roles")
+@Table(name = "hospital_roles")
 @Data
 @NoArgsConstructor
 public class Role {

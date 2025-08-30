@@ -8,7 +8,7 @@ const RETRY_DELAY = 15000;
 const TIME_WINDOW = 5;
 
 // 로컬호스트 대신 127.0.0.1 사용
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/horoscope_db";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/horoscope_dev";
 
 const mongooseOptions = {
   useNewUrlParser: true,

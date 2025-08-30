@@ -4,6 +4,7 @@ import axios from 'axios';
 import { getApiUrl } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import CategoryTree from '../../components/community/CategoryTree';
+import ProfileImage from '../../components/common/ProfileImage';
 
 const CommunityPage = () => {
   const navigate = useNavigate();
@@ -62,61 +63,16 @@ const CommunityPage = () => {
     navigate(`/community/boards/${postId}`);
   };
 
-  // 프로필 이미지 URL 생성 함수
-  const getProfileImageUrl = (imagePath) => {
-    if (!imagePath) {
-      return null;
-    }
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    if (imagePath.startsWith('https://storage.googleapis.com')) {
-      return imagePath;
-    }
-    const finalUrl = `${getApiUrl()}${imagePath}`;
-    return finalUrl;
-  };
-
   // 프로필 이미지 또는 이니셜 표시 컴포넌트
-  const ProfileImage = ({ profileImage, username }) => {
-    const [imageError, setImageError] = useState(false);
-
-    if (profileImage && !imageError) {
-      const imageUrl = getProfileImageUrl(profileImage);
-      return (
-        <img
-          src={imageUrl}
-          alt={username || '작성자'}
-          className="w-8 h-8 rounded-full object-cover"
-          onError={() => {
-            setImageError(true);
-          }}
-        />
-      );
-    }
-
+  const ProfileImageComponent = ({ profileImage, username }) => {
     return (
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold ${getRandomColor(username)}`}>
-        {getInitials(username)}
-      </div>
+      <ProfileImage
+        imagePath={profileImage}
+        username={username}
+        size="sm"
+        showBorder={false}
+      />
     );
-  };
-
-  // 랜덤 색상 생성 함수
-  const getRandomColor = (username) => {
-    if (!username) return 'bg-gray-500';
-    const colors = [
-      'bg-red-500', 'bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 
-      'bg-blue-500', 'bg-cyan-500', 'bg-teal-500', 'bg-green-500',
-      'bg-yellow-500', 'bg-orange-500'
-    ];
-    const index = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-    return colors[index];
-  };
-
-  // 사용자 이니셜 가져오기
-  const getInitials = (username) => {
-    return username ? username.charAt(0).toUpperCase() : '?';
   };
 
   return (
@@ -172,7 +128,7 @@ const CommunityPage = () => {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center space-x-3">
                           <div className="flex-shrink-0">
-                            <ProfileImage profileImage={post.profile_image} username={post.user_name} />
+                            <ProfileImageComponent profileImage={post.profile_image} username={post.user_name} />
                           </div>
                           <div>
                             <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{post.title}</h3>
@@ -261,7 +217,7 @@ const CommunityPage = () => {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center space-x-3">
                           <div className="flex-shrink-0">
-                            <ProfileImage profileImage={post.profile_image} username={post.user_name} />
+                            <ProfileImageComponent profileImage={post.profile_image} username={post.user_name} />
                           </div>
                           <div>
                             <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{post.title}</h3>
@@ -344,7 +300,7 @@ const CommunityPage = () => {
                     <div className="flex items-start justify-between mb-2" onClick={() => handlePostClick(post.id)}>
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
-                          <ProfileImage profileImage={post.profile_image} username={post.user_name} />
+                          <ProfileImageComponent profileImage={post.profile_image} username={post.user_name} />
                         </div>
                         <div>
                           <h3 className="text-base font-medium text-gray-900 cursor-pointer">{post.title}</h3>

@@ -54,98 +54,96 @@ public class IndexService {
             
             String mappingJson = """
                 {
-                  "mappings": {
-                    "properties": {
-                      "yadmNm": { "type": "text" },
-                      "addr": { "type": "text" },
-                      "region": { "type": "keyword" },
-                      "subject": { "type": "text" },
-                      "major": { "type": "keyword" },
-                      "location": { "type": "geo_point" },
-                      "hospUrl": { "type": "text" },
-                      "telno": { "type": "text" },
-                      "times": {
-                        "type": "object",
-                        "dynamic": true,
-                        "properties": {
-                          "trmtMonStart": { "type": "text" },
-                          "trmtMonEnd": { "type": "text" },
-                          "trmtTueStart": { "type": "text" },
-                          "trmtTueEnd": { "type": "text" },
-                          "trmtWedStart": { "type": "text" },
-                          "trmtWedEnd": { "type": "text" },
-                          "trmtThuStart": { "type": "text" },
-                          "trmtThuEnd": { "type": "text" },
-                          "trmtFriStart": { "type": "text" },
-                          "trmtFriEnd": { "type": "text" },
-                          "trmtSatStart": { "type": "text" },
-                          "trmtSatEnd": { "type": "text" },
-                          "lunchWeek": { "type": "text" },
-                          "rcvWeek": { "type": "text" },
-                          "rcvSat": { "type": "text" },
-                          "emyNgtYn": { "type": "text" },
-                          "noTrmtSat": { "type": "text" },
-                          "noTrmtSun": { "type": "text" },
-                          "emyDayTelNo1": { "type": "text" },
-                          "emyDayTelNo2": { "type": "text" },
-                          "emyDayYn": { "type": "text" },
-                          "emyNgtTelNo1": { "type": "text" },
-                          "emyNgtTelNo2": { "type": "text" },
-                          "noTrmtHoli": { "type": "text" },
-                          "parkEtc": { "type": "text" },
-                          "parkQty": { "type": "integer" },
-                          "parkXpnsYn": { "type": "text" },
-                          "plcDir": { "type": "text" },
-                          "plcDist": { "type": "text" },
-                          "plcNm": { "type": "text" }
-                        }
-                      },
-                      "equipment": {
-                        "type": "nested",
-                        "properties": {
-                          "typeCd": { "type": "text" },
-                          "typeCdNm": { "type": "text" },
-                          "typeCnt": { "type": "text" }
-                        }
-                      },
-                      "food_treatment": {
-                        "type": "nested",
-                        "properties": {
-                          "typeCd": { "type": "text" },
-                          "typeCdNm": { "type": "text" },
-                          "genMealAddYn": { "type": "text" },
-                          "psnlCnt": { "type": "text" }
-                        }
-                      },
-                      "intensive_care": {
-                        "type": "nested",
-                        "properties": {
-                          "typeCd": { "type": "text" },
-                          "typeCdNm": { "type": "text" }
-                        }
-                      },
-                      "nursing_grade": {
-                        "type": "nested",
-                        "properties": {
-                          "typeCd": { "type": "text" },
-                          "typeCdNm": { "type": "text" },
-                          "nursingRt": { "type": "text" }
-                        }
-                      },
-                      "personnel": {
-                        "type": "nested",
-                        "properties": {
-                          "pharmCd": { "type": "text" },
-                          "pharmCdNm": { "type": "text" },
-                          "pharmCnt": { "type": "text" }
-                        }
-                      },
-                      "speciality": {
-                        "type": "nested",
-                        "properties": {
-                          "typeCd": { "type": "text" },
-                          "typeCdNm": { "type": "text" }
-                        }
+                  "properties": {
+                    "yadmNm": { "type": "text" },
+                    "addr": { "type": "text" },
+                    "region": { "type": "keyword" },
+                    "subject": { "type": "text" },
+                    "major": { "type": "keyword" },
+                    "location": { "type": "geo_point" },
+                    "hospUrl": { "type": "text" },
+                    "telno": { "type": "text" },
+                    "times": {
+                      "type": "object",
+                      "dynamic": true,
+                      "properties": {
+                        "trmtMonStart": { "type": "text" },
+                        "trmtMonEnd": { "type": "text" },
+                        "trmtTueStart": { "type": "text" },
+                        "trmtTueEnd": { "type": "text" },
+                        "trmtWedStart": { "type": "text" },
+                        "trmtWedEnd": { "type": "text" },
+                        "trmtThuStart": { "type": "text" },
+                        "trmtThuEnd": { "type": "text" },
+                        "trmtFriStart": { "type": "text" },
+                        "trmtFriEnd": { "type": "text" },
+                        "trmtSatStart": { "type": "text" },
+                        "trmtSatEnd": { "type": "text" },
+                        "lunchWeek": { "type": "text" },
+                        "rcvWeek": { "type": "text" },
+                        "rcvSat": { "type": "text" },
+                        "emyNgtYn": { "type": "text" },
+                        "noTrmtSat": { "type": "text" },
+                        "noTrmtSun": { "type": "text" },
+                        "emyDayTelNo1": { "type": "text" },
+                        "emyDayTelNo2": { "type": "text" },
+                        "emyDayYn": { "type": "text" },
+                        "emyNgtTelNo1": { "type": "text" },
+                        "emyNgtTelNo2": { "type": "text" },
+                        "noTrmtHoli": { "type": "text" },
+                        "parkEtc": { "type": "text" },
+                        "parkQty": { "type": "integer" },
+                        "parkXpnsYn": { "type": "text" },
+                        "plcDir": { "type": "text" },
+                        "plcDist": { "type": "text" },
+                        "plcNm": { "type": "text" }
+                      }
+                    },
+                    "equipment": {
+                      "type": "nested",
+                      "properties": {
+                        "typeCd": { "type": "text" },
+                        "typeCdNm": { "type": "text" },
+                        "typeCnt": { "type": "text" }
+                      }
+                    },
+                    "food_treatment": {
+                      "type": "nested",
+                      "properties": {
+                        "typeCd": { "type": "text" },
+                        "typeCdNm": { "type": "text" },
+                        "genMealAddYn": { "type": "text" },
+                        "psnlCnt": { "type": "text" }
+                      }
+                    },
+                    "intensive_care": {
+                      "type": "nested",
+                      "properties": {
+                        "typeCd": { "type": "text" },
+                        "typeCdNm": { "type": "text" }
+                      }
+                    },
+                    "nursing_grade": {
+                      "type": "nested",
+                      "properties": {
+                        "typeCd": { "type": "text" },
+                        "typeCdNm": { "type": "text" },
+                        "nursingRt": { "type": "text" }
+                      }
+                    },
+                    "personnel": {
+                      "type": "nested",
+                      "properties": {
+                        "pharmCd": { "type": "text" },
+                        "typeCdNm": { "type": "text" },
+                        "pharmCnt": { "type": "text" }
+                      }
+                    },
+                    "speciality": {
+                      "type": "nested",
+                      "properties": {
+                        "typeCd": { "type": "text" },
+                        "typeCdNm": { "type": "text" }
                       }
                     }
                   }
@@ -187,23 +185,21 @@ public class IndexService {
             
             String mappingJson = """
                 {
-                  "mappings": {
-                    "properties": {
-                      "ykiho": { "type": "keyword" },
-                      "yadmNm": { "type": "text" },
-                      "clCd": { "type": "keyword" },
-                      "clCdNm": { "type": "keyword" },
-                      "sidoCd": { "type": "keyword" },
-                      "sidoCdNm": { "type": "keyword" },
-                      "sgguCd": { "type": "keyword" },
-                      "sgguCdNm": { "type": "keyword" },
-                      "emdongNm": { "type": "keyword" },
-                      "postNo": { "type": "keyword" },
-                      "addr": { "type": "text" },
-                      "telno": { "type": "text" },
-                      "estbDd": { "type": "keyword" },
-                      "location": { "type": "geo_point" }
-                    }
+                  "properties": {
+                    "ykiho": { "type": "keyword" },
+                    "yadmNm": { "type": "text" },
+                    "clCd": { "type": "keyword" },
+                    "clCdNm": { "type": "keyword" },
+                    "sidoCd": { "type": "keyword" },
+                    "sidoCdNm": { "type": "keyword" },
+                    "sgguCd": { "type": "keyword" },
+                    "sgguCdNm": { "type": "keyword" },
+                    "emdongNm": { "type": "keyword" },
+                    "postNo": { "type": "keyword" },
+                    "addr": { "type": "text" },
+                    "telno": { "type": "text" },
+                    "estbDd": { "type": "keyword" },
+                    "location": { "type": "geo_point" }
                   }
                 }
                 """;
@@ -290,19 +286,17 @@ public class IndexService {
             
             String mappingJson = """
                 {
-                  "mappings": {
-                    "properties": {
-                      "clusterId": { "type": "keyword" },
-                      "center": { "type": "geo_point" },
-                      "count": { "type": "integer" },
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "keyword" },
-                          "type": { "type": "keyword" },
-                          "name": { "type": "text" },
-                          "location": { "type": "geo_point" }
-                        }
+                  "properties": {
+                    "clusterId": { "type": "keyword" },
+                    "center": { "type": "geo_point" },
+                    "count": { "type": "integer" },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "keyword" },
+                        "type": { "type": "keyword" },
+                        "name": { "type": "text" },
+                        "location": { "type": "geo_point" }
                       }
                     }
                   }

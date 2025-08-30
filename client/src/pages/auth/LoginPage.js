@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getApiUrl } from '../../utils/api';
-import axios from '../../utils/axios';
+import { api } from '../../utils/api';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -14,7 +13,6 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [apiUrl, setApiUrl] = useState('');
   const [kakaoSettings, setKakaoSettings] = useState({
     client_id: '',
     redirect_uri: ''
@@ -26,15 +24,11 @@ const LoginPage = () => {
   });
 
   useEffect(() => {
-    setApiUrl(getApiUrl());
-  }, []);
-
-  useEffect(() => {
     const fetchSocialSettings = async () => {
       try {
         const [kakaoResponse, naverResponse] = await Promise.all([
-          axios.get('/auth/social-config/kakao'),
-          axios.get('/auth/social-config/naver')
+          api.get('/api/auth/social-config/kakao'),
+          api.get('/api/auth/social-config/naver')
         ]);
         
         setKakaoSettings(kakaoResponse.data);
@@ -60,7 +54,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('/auth/login', {
+      const response = await api.post('/api/auth/login', {
         username: formData.username,
         password: formData.password
       });
@@ -105,7 +99,7 @@ const LoginPage = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      const response = await axios.get('/auth/social-config/google');
+      const response = await api.get('/api/auth/social-config/google');
       const { client_id, redirect_uri } = response.data;
       
       if (!client_id || !redirect_uri) {

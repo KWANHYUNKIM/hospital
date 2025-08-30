@@ -4,6 +4,7 @@ import axios from 'axios';
 import { getApiUrl } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ProfileImage from '../common/ProfileImage';
 
 const Comment = ({ onSubmit, boardId, comment }) => {
   const { user } = useAuth();
@@ -175,19 +176,12 @@ const Comment = ({ onSubmit, boardId, comment }) => {
         <form onSubmit={handleSubmit} className="space-y-2">
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
-              {user?.profile_image ? (
-                <img
-                  src={user.profile_image}
-                  alt={user.username || '사용자'}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold text-sm">
-                    {user?.username?.charAt(0).toUpperCase() || '?'}
-                  </span>
-                </div>
-              )}
+              <ProfileImage
+                imagePath={user?.profile_image}
+                username={user?.username}
+                size="sm"
+                showBorder={false}
+              />
             </div>
             <div className="flex-grow">
               <textarea

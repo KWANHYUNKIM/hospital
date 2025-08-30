@@ -14,8 +14,10 @@ public class RegisterRequest {
     private String password;
     private String email;
     private String nickname;
+    private String realName;
     private String interests;
     private String socialId;
     private String socialProvider;
     private Boolean isEmailVerified;
+    private String profileImage;
 } 

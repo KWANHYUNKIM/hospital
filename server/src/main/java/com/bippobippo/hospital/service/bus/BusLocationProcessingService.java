@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class BusLocationProcessingService {
     
     private final BusLocationService busLocationService;
-    private final BusLocationKafkaProducer kafkaProducer;
+    // private final BusLocationKafkaProducer kafkaProducer;
     
     // 노선별 버스 위치 집계
     public Map<String, Object> aggregateBusLocationsByRoute(String routeId) {
@@ -145,10 +145,10 @@ public class BusLocationProcessingService {
                 ));
             realTimeStats.put("cityStats", cityStats);
             
-            // Kafka로 실시간 통계 전송
-            kafkaProducer.sendProcessedBusLocation(realTimeStats);
+            // Kafka로 실시간 통계 전송 - 주석처리
+            // kafkaProducer.sendProcessedBusLocation(realTimeStats);
             
-            log.info("실시간 통계 생성 및 전송 완료: {}개 버스", allLocations.size());
+            log.info("실시간 통계 생성 완료: {}개 버스 (Kafka 전송 비활성화)", allLocations.size());
             
         } catch (Exception e) {
             log.error("실시간 통계 생성 실패: {}", e.getMessage(), e);

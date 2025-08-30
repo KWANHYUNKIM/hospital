@@ -1,5 +1,7 @@
 package com.bippobippo.hospital.config;
 
+// Kafka 관련 설정 클래스 - 개발 전단계로 주석처리
+/*
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -66,4 +68,5 @@ public class KafkaConfig {
         factory.setConcurrency(3); // 3개의 컨슈머 스레드
         return factory;
     }
-} 
+}
+*/ 

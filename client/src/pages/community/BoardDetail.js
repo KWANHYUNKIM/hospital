@@ -6,6 +6,7 @@ import BoardList from './BoardList';
 import { getApiUrl } from '../../utils/api';
 import CategoryTree from '../../components/community/CategoryTree';
 import Comment from '../../components/community/Comment';
+import ProfileImage from '../../components/common/ProfileImage';
 
 const BoardDetail = () => {
   const { id } = useParams();
@@ -534,18 +535,13 @@ const BoardDetail = () => {
               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                 <span className="text-gray-600 font-semibold text-sm">X</span>
               </div>
-            ) : comment.authorProfileImage ? (
-              <img
-                src={comment.authorProfileImage}
-                alt={comment.username || '사용자'}
-                className="w-8 h-8 rounded-full object-cover"
-              />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-blue-600 font-semibold text-sm">
-                  {comment.username?.charAt(0).toUpperCase() || '?'}
-                </span>
-              </div>
+              <ProfileImage
+                imagePath={comment.authorProfileImage}
+                username={comment.username}
+                size="sm"
+                showBorder={false}
+              />
             )}
           </div>
           <div className="flex-grow">
@@ -815,22 +811,6 @@ const BoardDetail = () => {
     }
   };
 
-  const getRandomColor = (username) => {
-    if (!username) return 'bg-gray-500';
-    const colors = [
-      'bg-red-500', 'bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 
-      'bg-blue-500', 'bg-cyan-500', 'bg-teal-500', 'bg-green-500',
-      'bg-yellow-500', 'bg-orange-500'
-    ];
-    const index = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-    return colors[index];
-  };
-
-  const getInitials = (username) => {
-    if (!username) return '?';
-    return username.charAt(0).toUpperCase();
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return '날짜 정보 없음';
     try {
@@ -889,17 +869,12 @@ const BoardDetail = () => {
                       <div className="flex flex-wrap items-center text-gray-600 text-xs gap-4">
                         <div className="flex items-center gap-2">
                           <div className="flex-shrink-0">
-                            {board.profileImage ? (
-                              <img
-                                src={board.profileImage}
-                                alt={board.authorName || '작성자'}
-                                className="w-8 h-8 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold ${getRandomColor(board.authorName || '')}`}>
-                                {getInitials(board.authorName)}
-                              </div>
-                            )}
+                            <ProfileImage
+                              imagePath={board.profileImage}
+                              username={board.authorName}
+                              size="sm"
+                              showBorder={false}
+                            />
                           </div>
                           <span className="font-medium">작성자: {board.authorName || '알 수 없음'}</span>
                         </div>
