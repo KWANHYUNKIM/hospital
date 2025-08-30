@@ -63,6 +63,9 @@ public class AutoIndexingService {
                 logger.error("❌ 서버 시작 시 초기 동기화 중 오류 발생:", e);
             }
         }, executorService);
+        
+        // Change Stream은 단일 MongoDB 서버에서 지원되지 않으므로 비활성화
+        logger.warn("⚠️ Change Stream은 단일 MongoDB 서버에서 지원되지 않습니다. 자동 동기화만 사용됩니다.");
     }
     
     /**
@@ -81,6 +84,9 @@ public class AutoIndexingService {
             
             logger.info("🗺️ 지도 데이터 초기 동기화 시작...");
             syncMapDataIfNeeded();
+            
+            logger.info("🗺️ 지도 클러스터 데이터 초기 동기화 시작...");
+            syncMapClusterDataIfNeeded();
             
             logger.info("✅ 서버 시작 시 초기 동기화 완료!");
         } catch (Exception e) {
@@ -109,6 +115,11 @@ public class AutoIndexingService {
             // 지도 데이터 동기화 체크
             if (!syncInProgress.getOrDefault("map", false)) {
                 CompletableFuture.runAsync(() -> syncMapDataIfNeeded(), executorService);
+            }
+            
+            // 지도 클러스터 데이터 동기화 체크
+            if (!syncInProgress.getOrDefault("map_cluster", false)) {
+                CompletableFuture.runAsync(() -> syncMapClusterDataIfNeeded(), executorService);
             }
             
         } catch (Exception e) {
@@ -503,5 +514,205 @@ public class AutoIndexingService {
         }
         
         return result;
+    }
+    
+    /**
+     * map_data_cluster 인덱스 생성
+     */
+    public Map<String, Object> createMapClusterIndex() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            logger.info("🚀 map_data_cluster 인덱스 생성 시작...");
+            
+            // 기존 인덱스가 있는지 확인
+            boolean exists = elasticsearchService.indexExists("map_data_cluster");
+            
+            if (exists) {
+                logger.info("⚠️ 기존 map_data_cluster 인덱스가 존재합니다. 삭제 중...");
+                elasticsearchService.deleteIndex("map_data_cluster");
+                logger.info("✅ 기존 인덱스 삭제 완료");
+            }
+            
+            // 새 인덱스 생성
+            boolean created = elasticsearchService.createMapClusterIndex();
+            
+            if (created) {
+                result.put("success", true);
+                result.put("message", "map_data_cluster 인덱스가 성공적으로 생성되었습니다.");
+                result.put("timestamp", new Date());
+                logger.info("✅ map_data_cluster 인덱스 생성 완료!");
+            } else {
+                result.put("success", false);
+                result.put("message", "map_data_cluster 인덱스 생성에 실패했습니다.");
+                result.put("timestamp", new Date());
+                logger.error("❌ map_data_cluster 인덱스 생성 실패");
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ map_data_cluster 인덱스 생성 중 오류 발생:", e);
+            result.put("success", false);
+            result.put("message", "map_data_cluster 인덱스 생성 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("error", e.getMessage());
+            result.put("timestamp", new Date());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * map_data_cluster 인덱스 삭제
+     */
+    public Map<String, Object> deleteMapClusterIndex() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            logger.info("🗑️ map_data_cluster 인덱스 삭제 시작...");
+            
+            boolean deleted = elasticsearchService.deleteIndex("map_data_cluster");
+            
+            if (deleted) {
+                result.put("success", true);
+                result.put("message", "map_data_cluster 인덱스가 성공적으로 삭제되었습니다.");
+                result.put("timestamp", new Date());
+                logger.info("✅ map_data_cluster 인덱스 삭제 완료!");
+            } else {
+                result.put("success", false);
+                result.put("message", "map_data_cluster 인덱스 삭제에 실패했습니다.");
+                result.put("timestamp", new Date());
+                logger.error("❌ map_data_cluster 인덱스 삭제 실패");
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ map_data_cluster 인덱스 삭제 중 오류 발생:", e);
+            result.put("success", false);
+            result.put("message", "map_data_cluster 인덱스 삭제 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("error", e.getMessage());
+            result.put("timestamp", new Date());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * map_data_cluster 인덱스 상태 확인
+     */
+    public Map<String, Object> getMapClusterIndexStatus() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            logger.info("🔍 map_data_cluster 인덱스 상태 확인 중...");
+            
+            boolean exists = elasticsearchService.indexExists("map_data_cluster");
+            
+            result.put("exists", exists);
+            result.put("timestamp", new Date());
+            
+            if (exists) {
+                // 인덱스 정보 조회
+                Map<String, Object> indexInfo = elasticsearchService.getIndexInfo("map_data_cluster");
+                result.put("indexInfo", indexInfo);
+                result.put("message", "map_data_cluster 인덱스가 존재합니다.");
+            } else {
+                result.put("message", "map_data_cluster 인덱스가 존재하지 않습니다.");
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ map_data_cluster 인덱스 상태 확인 중 오류 발생:", e);
+            result.put("error", e.getMessage());
+            result.put("timestamp", new Date());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * map_data_cluster 인덱스 데이터 생성 (bulk indexing)
+     */
+    public Map<String, Object> bulkMapClusterIndex() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            logger.info("🚀 map_data_cluster 인덱스 데이터 생성 시작...");
+            
+            // 먼저 인덱스가 존재하는지 확인
+            boolean exists = elasticsearchService.indexExists("map_data_cluster");
+            if (!exists) {
+                logger.info("⚠️ map_data_cluster 인덱스가 존재하지 않습니다. 먼저 생성합니다...");
+                createMapClusterIndex();
+            }
+            
+            // bulk indexing 실행
+            boolean success = bulkIndexService.bulkMapClusterIndex();
+            
+            if (success) {
+                result.put("success", true);
+                result.put("message", "map_data_cluster 인덱스 데이터 생성이 완료되었습니다.");
+                result.put("timestamp", new Date());
+                logger.info("✅ map_data_cluster 인덱스 데이터 생성 완료!");
+            } else {
+                result.put("success", false);
+                result.put("message", "map_data_cluster 인덱스 데이터 생성에 실패했습니다.");
+                result.put("timestamp", new Date());
+                logger.error("❌ map_data_cluster 인덱스 데이터 생성 실패");
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ map_data_cluster 인덱스 데이터 생성 중 오류 발생:", e);
+            result.put("success", false);
+            result.put("message", "map_data_cluster 인덱스 데이터 생성 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("error", e.getMessage());
+            result.put("timestamp", new Date());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 지도 클러스터 데이터 자동 동기화 (서버 시작 시 + 일일)
+     */
+    public void syncMapClusterDataIfNeeded() {
+        if (syncInProgress.getOrDefault("map_cluster", false)) {
+            logger.debug("지도 클러스터 동기화가 이미 진행 중입니다.");
+            return;
+        }
+        
+        syncInProgress.put("map_cluster", true);
+        
+        try {
+            logger.info("🗺️ 지도 클러스터 데이터 동기화 체크 시작...");
+            
+            // map_data_cluster 인덱스가 존재하는지 확인
+            boolean exists = elasticsearchService.indexExists("map_data_cluster");
+            
+            if (!exists) {
+                logger.info("🆕 map_data_cluster 인덱스가 존재하지 않습니다. 인덱스 생성 및 데이터 색인을 시작합니다.");
+                createMapClusterIndex();
+                bulkMapClusterIndex();
+            } else {
+                // 인덱스가 존재하면 문서 수 확인
+                Map<String, Object> indexInfo = elasticsearchService.getIndexInfo("map_data_cluster");
+                long documentCount = 0L;
+                if (indexInfo.containsKey("documentCount")) {
+                    Object countObj = indexInfo.get("documentCount");
+                    if (countObj instanceof Number) {
+                        documentCount = ((Number) countObj).longValue();
+                    }
+                }
+                if (documentCount == 0) {
+                    logger.info("🆕 map_data_cluster 인덱스가 비어있습니다. 데이터 색인을 시작합니다.");
+                    bulkMapClusterIndex();
+                } else {
+                    logger.info("✅ 지도 클러스터 데이터가 동기화되어 있습니다. 문서 수: {}", documentCount);
+                }
+            }
+            
+            lastSyncTimes.put("map_cluster", new Date());
+            
+        } catch (Exception e) {
+            logger.error("❌ 지도 클러스터 데이터 동기화 중 오류 발생:", e);
+        } finally {
+            syncInProgress.put("map_cluster", false);
+        }
     }
 } 

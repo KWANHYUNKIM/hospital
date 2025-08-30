@@ -776,9 +776,181 @@ public class BulkIndexService {
     /**
      * 지도 클러스터 데이터 벌크 색인
      */
-    public void bulkMapClusterIndex() throws IOException {
-        // TODO: 구현 필요
-        logger.info("지도 클러스터 데이터 벌크 색인 - 구현 예정");
+    public boolean bulkMapClusterIndex() throws IOException {
+        try {
+            logger.info("🚀 지도 클러스터 데이터 벌크 색인 시작...");
+            
+            // MongoDB에서 경계 데이터 조회
+            List<Map> boundaries = new ArrayList<>();
+            
+            // 각 경계 타입별로 데이터 수집
+            String[] boundaryTypes = {"ctprvn", "sig", "emd", "li"};
+            for (String type : boundaryTypes) {
+                String collectionName = "sggu_boundaries_" + type;
+                List<Map> typeBoundaries = mongoTemplate.find(new Query(), Map.class, collectionName);
+                boundaries.addAll(typeBoundaries);
+                logger.info("📄 {} 컬렉션에서 {}개 문서 로드", collectionName, typeBoundaries.size());
+            }
+            
+            if (boundaries.isEmpty()) {
+                logger.warn("⚠️ 경계 데이터가 없습니다.");
+                return false;
+            }
+            
+            // 벌크 요청 생성
+            BulkRequest bulkRequest = new BulkRequest();
+            int processedCount = 0;
+            
+            for (Map boundary : boundaries) {
+                try {
+                    Map<String, Object> properties = (Map<String, Object>) boundary.get("properties");
+                    Map<String, Object> geometry = (Map<String, Object>) boundary.get("geometry");
+                    
+                    if (properties == null || geometry == null) {
+                        continue;
+                    }
+                    
+                    // 경계 타입 결정
+                    String boundaryType = null;
+                    String boundaryId = null;
+                    String name = null;
+                    
+                    if (properties.containsKey("CTPRVN_CD")) {
+                        boundaryType = "ctprvn";
+                        boundaryId = properties.get("CTPRVN_CD").toString();
+                        name = properties.get("CTP_KOR_NM").toString();
+                    } else if (properties.containsKey("SIG_CD")) {
+                        boundaryType = "sig";
+                        boundaryId = properties.get("SIG_CD").toString();
+                        name = properties.get("SIG_KOR_NM").toString();
+                    } else if (properties.containsKey("EMD_CD")) {
+                        boundaryType = "emd";
+                        boundaryId = properties.get("EMD_CD").toString();
+                        name = properties.get("EMD_KOR_NM").toString();
+                    } else if (properties.containsKey("LI_CD")) {
+                        boundaryType = "li";
+                        boundaryId = properties.get("LI_CD").toString();
+                        name = properties.get("LI_KOR_NM").toString();
+                    }
+                    
+                    if (boundaryType == null || boundaryId == null || name == null) {
+                        continue;
+                    }
+                    
+                    // 중심점 계산
+                    Map<String, Double> centroid = calculateCentroid(geometry);
+                    
+                    // 클러스터 데이터 생성
+                    Map<String, Object> clusterData = new HashMap<>();
+                    clusterData.put("type", "cluster");
+                    clusterData.put("name", name);
+                    clusterData.put("boundaryType", boundaryType);
+                    clusterData.put("boundaryId", boundaryId);
+                    clusterData.put("location", centroid);
+                    clusterData.put("clusterId", boundaryType + "_" + boundaryId);
+                    clusterData.put("hospitalCount", 0); // 기본값, 나중에 계산 가능
+                    clusterData.put("pharmacyCount", 0); // 기본값, 나중에 계산 가능
+                    clusterData.put("isClustered", true);
+                    
+                    // 벌크 요청에 추가
+                    IndexRequest indexRequest = new IndexRequest("map_data_cluster")
+                        .id(clusterData.get("clusterId").toString())
+                        .source(clusterData, XContentType.JSON);
+                    
+                    bulkRequest.add(indexRequest);
+                    processedCount++;
+                    
+                } catch (Exception e) {
+                    logger.warn("⚠️ 경계 데이터 처리 중 오류 발생: {}", e.getMessage());
+                    continue;
+                }
+            }
+            
+            if (bulkRequest.numberOfActions() > 0) {
+                // 벌크 색인 실행
+                BulkResponse bulkResponse = elasticsearchClient.bulk(bulkRequest, org.elasticsearch.client.RequestOptions.DEFAULT);
+                
+                if (bulkResponse.hasFailures()) {
+                    logger.error("❌ 벌크 색인 중 일부 실패: {}", bulkResponse.buildFailureMessage());
+                    return false;
+                }
+                
+                // 인덱스 새로고침
+                RefreshRequest refreshRequest = new RefreshRequest("map_data_cluster");
+                elasticsearchClient.indices().refresh(refreshRequest, org.elasticsearch.client.RequestOptions.DEFAULT);
+                
+                logger.info("✅ 지도 클러스터 데이터 벌크 색인 완료: {}개 문서", processedCount);
+                return true;
+            } else {
+                logger.warn("⚠️ 색인할 데이터가 없습니다.");
+                return false;
+            }
+            
+        } catch (Exception e) {
+            logger.error("❌ 지도 클러스터 데이터 벌크 색인 중 오류 발생:", e);
+            return false;
+        }
+    }
+    
+    /**
+     * 지오메트리 중심점 계산
+     */
+    private Map<String, Double> calculateCentroid(Map<String, Object> geometry) {
+        Map<String, Double> centroid = new HashMap<>();
+        centroid.put("lat", 0.0);
+        centroid.put("lon", 0.0);
+        
+        try {
+            if ("Polygon".equals(geometry.get("type"))) {
+                List<List<List<Double>>> coordinates = (List<List<List<Double>>>) geometry.get("coordinates");
+                if (coordinates != null && !coordinates.isEmpty()) {
+                    List<List<Double>> ring = coordinates.get(0);
+                    double sumLat = 0, sumLon = 0;
+                    int count = 0;
+                    
+                    for (List<Double> coord : ring) {
+                        if (coord.size() >= 2) {
+                            sumLon += coord.get(0);
+                            sumLat += coord.get(1);
+                            count++;
+                        }
+                    }
+                    
+                    if (count > 0) {
+                        centroid.put("lon", sumLon / count);
+                        centroid.put("lat", sumLat / count);
+                    }
+                }
+            } else if ("MultiPolygon".equals(geometry.get("type"))) {
+                List<List<List<List<Double>>>> coordinates = (List<List<List<List<Double>>>>) geometry.get("coordinates");
+                if (coordinates != null && !coordinates.isEmpty()) {
+                    double sumLat = 0, sumLon = 0;
+                    int count = 0;
+                    
+                    for (List<List<List<Double>>> polygon : coordinates) {
+                        if (polygon != null && !polygon.isEmpty()) {
+                            List<List<Double>> ring = polygon.get(0);
+                            for (List<Double> coord : ring) {
+                                if (coord.size() >= 2) {
+                                    sumLon += coord.get(0);
+                                    sumLat += coord.get(1);
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (count > 0) {
+                        centroid.put("lon", sumLon / count);
+                        centroid.put("lat", sumLat / count);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("⚠️ 중심점 계산 중 오류 발생: {}", e.getMessage());
+        }
+        
+        return centroid;
     }
     
     /**

@@ -78,14 +78,32 @@ const PharmaciesList = () => {
     const loadInitialData = async () => {
       try {
         setLoading(true);
-        const response = await fetchAllPharmacies({
-          page: currentPage,
-          limit: itemsPerPage
-        });
-        if (response && response.data) {
-          setPharmacies(response.data);
-          setTotalPages(response.totalPages);
-          setTotalCount(response.totalCount);
+        
+        // 위치 기반 검색이 활성화된 경우 searchPharmacies 사용
+        if (locationBased && userLocation.x !== null && userLocation.y !== null) {
+          const response = await searchPharmacies({
+            x: userLocation.x,
+            y: userLocation.y,
+            distance: selectedDistance,
+            page: currentPage,
+            limit: itemsPerPage
+          });
+          if (response && response.data) {
+            setPharmacies(response.data);
+            setTotalPages(response.totalPages);
+            setTotalCount(response.totalCount);
+          }
+        } else {
+          // 일반 검색 또는 전체 목록
+          const response = await fetchAllPharmacies({
+            page: currentPage,
+            limit: itemsPerPage
+          });
+          if (response && response.data) {
+            setPharmacies(response.data);
+            setTotalPages(response.totalPages);
+            setTotalCount(response.totalCount);
+          }
         }
       } catch (error) {
         console.error('약국 데이터 로드 중 오류 발생:', error);
@@ -95,7 +113,7 @@ const PharmaciesList = () => {
     };
 
     loadInitialData();
-  }, [currentPage]);
+  }, [currentPage, locationBased, userLocation.x, userLocation.y, selectedDistance]);
 
   const handleSearch = async (e, customQuery) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -206,6 +224,18 @@ const PharmaciesList = () => {
   };
 
   const handleLocationSearch = () => {
+    // 이미 위치 기반 검색이 활성화되어 있으면 비활성화
+    if (locationBased) {
+      setLocationBased(false);
+      setUserLocation({ x: null, y: null });
+      setCurrentPage(1);
+      
+      // 일반 검색으로 돌아가기
+      handleSearch(null);
+      return;
+    }
+    
+    // 위치 기반 검색 활성화
     if (navigator.geolocation) {
       setLoading(true); // 로딩 시작
       navigator.geolocation.getCurrentPosition(
@@ -304,10 +334,19 @@ const PharmaciesList = () => {
             {/* 위치 기반 검색 버튼 */}
             <button
               onClick={handleLocationSearch}
-              className="mt-2 px-4 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center gap-2"
+              className={`mt-2 px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                locationBased
+                  ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md'
+                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+              }`}
             >
               <span>📍</span>
-              <span>내 주변 약국 찾기</span>
+              <span>{locationBased ? '내 주변 검색 ON' : '내 주변 약국 찾기'}</span>
+              {locationBased && (
+                <span className="ml-2 text-xs bg-white text-blue-500 px-2 py-1 rounded-full">
+                  ON
+                </span>
+              )}
             </button>
           </div>
 
@@ -317,8 +356,33 @@ const PharmaciesList = () => {
               검색어: <strong>{searchQuery}</strong>
             </p>
           )}
+          {/* 위치 기반 검색 상태 표시 */}
           {locationBased && userLocation.x !== null && userLocation.y !== null && (
-            <p className="text-md mt-2">내 주변 약국 검색 중...</p>
+            <div className="flex items-center gap-3 mt-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
+              <span className="text-sm font-medium">📍 내 주변 약국 검색</span>
+              <button
+                onClick={handleLocationSearch}
+                className={`relative w-12 h-6 rounded-full transition-all duration-300 flex items-center justify-center shadow-sm border border-white/50 ${
+                  locationBased
+                    ? 'bg-white/90'
+                    : 'bg-white/70 hover:bg-white/90'
+                } hover:scale-105 active:scale-95`}
+              >
+                <div
+                  className={`absolute w-4 h-4 bg-blue-500 rounded-full shadow-md transition-all duration-300 transform ${
+                    locationBased ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+                <span className={`text-xs font-bold transition-all duration-300 ${
+                  locationBased ? 'text-blue-600' : 'text-transparent'
+                }`}>
+                  {locationBased ? 'ON' : 'OFF'}
+                </span>
+              </button>
+              <span className="text-xs text-white/80">
+                반경: {selectedDistance/1000}km
+              </span>
+            </div>
           )}
         </div>
       </header>

@@ -44,17 +44,9 @@ public class MongoChangeStreamService {
         logger.info("🚀 MongoDB Change Stream 서비스 초기화 시작...");
         
         try {
-            // MessageListenerContainer 초기화
-            container = new DefaultMessageListenerContainer(mongoTemplate);
-            container.start();
-            
-            // 병원 컬렉션 변경사항 감지
-            setupHospitalChangeStream();
-            
-            // 약국 컬렉션 변경사항 감지
-            setupPharmacyChangeStream();
-            
-            logger.info("✅ MongoDB Change Stream 서비스 초기화 완료!");
+            // 단일 MongoDB 서버에서는 Change Stream을 지원하지 않으므로 비활성화
+            logger.warn("⚠️ 단일 MongoDB 서버에서는 Change Stream을 지원하지 않습니다. Change Stream이 비활성화됩니다.");
+            logger.info("✅ MongoDB Change Stream 서비스 초기화 완료 (비활성화됨)!");
             
         } catch (Exception e) {
             logger.error("❌ MongoDB Change Stream 서비스 초기화 중 오류 발생:", e);

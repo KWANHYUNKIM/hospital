@@ -150,6 +150,18 @@ public class ElasticsearchService {
     }
     
     /**
+     * map_data_cluster 인덱스 생성
+     */
+    public boolean createMapClusterIndex() {
+        try {
+            return indexService.createMapClusterIndex();
+        } catch (Exception e) {
+            logger.error("❌ map_data_cluster 인덱스 생성 중 오류 발생:", e);
+            return false;
+        }
+    }
+    
+    /**
      * 인덱스 정보 조회
      */
     public Map<String, Object> getIndexInfo(String indexName) {

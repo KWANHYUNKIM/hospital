@@ -264,52 +264,50 @@ public class IndexService {
     /**
      * 지도 클러스터 인덱스 생성
      */
-    public void createMapClusterIndex() throws IOException {
+    public boolean createMapClusterIndex() throws IOException {
         try {
             // 인덱스 존재 여부 확인
-            GetIndexRequest existsRequest = new GetIndexRequest("map_cluster");
+            GetIndexRequest existsRequest = new GetIndexRequest("map_data_cluster");
             boolean existsResponse = elasticsearchClient.indices().exists(existsRequest, RequestOptions.DEFAULT);
             
             if (existsResponse) {
-                logger.info("기존 인덱스 'map_cluster' 삭제 중...");
-                DeleteIndexRequest deleteRequest = new DeleteIndexRequest("map_cluster");
+                logger.info("기존 인덱스 'map_data_cluster' 삭제 중...");
+                DeleteIndexRequest deleteRequest = new DeleteIndexRequest("map_data_cluster");
                 AcknowledgedResponse deleteResponse = elasticsearchClient.indices().delete(deleteRequest, RequestOptions.DEFAULT);
-                logger.info("기존 인덱스 'map_cluster' 삭제 완료!");
+                logger.info("기존 인덱스 'map_data_cluster' 삭제 완료!");
             }
 
             // 인덱스 생성
-            CreateIndexRequest createRequest = new CreateIndexRequest("map_cluster");
+            CreateIndexRequest createRequest = new CreateIndexRequest("map_data_cluster");
             createRequest.settings(Settings.builder()
-                .put("index.number_of_shards", 3)
+                .put("index.number_of_shards", 1)
                 .put("index.number_of_replicas", 1)
             );
             
             String mappingJson = """
                 {
                   "properties": {
+                    "type": { "type": "keyword" },
+                    "name": { "type": "text" },
+                    "boundaryType": { "type": "keyword" },
+                    "boundaryId": { "type": "keyword" },
+                    "location": { "type": "geo_point" },
                     "clusterId": { "type": "keyword" },
-                    "center": { "type": "geo_point" },
-                    "count": { "type": "integer" },
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": { "type": "keyword" },
-                        "type": { "type": "keyword" },
-                        "name": { "type": "text" },
-                        "location": { "type": "geo_point" }
-                      }
-                    }
+                    "hospitalCount": { "type": "integer" },
+                    "pharmacyCount": { "type": "integer" },
+                    "isClustered": { "type": "boolean" }
                   }
                 }
                 """;
             
             createRequest.mapping(mappingJson, XContentType.JSON);
             elasticsearchClient.indices().create(createRequest, RequestOptions.DEFAULT);
-            logger.info("✅ 지도 클러스터 인덱스 'map_cluster' 생성 완료!");
+            logger.info("✅ 지도 클러스터 인덱스 'map_data_cluster' 생성 완료!");
+            return true;
             
         } catch (Exception e) {
             logger.error("❌ 지도 클러스터 인덱스 생성 중 오류 발생:", e);
-            throw e;
+            return false;
         }
     }
     

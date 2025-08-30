@@ -61,8 +61,11 @@ public class PharmacySearchService {
             
             searchSourceBuilder.query(boolQuery);
             
-            // 임시로 정렬과 집계 제거
-            logger.info("정렬과 집계를 임시로 제거하고 기본 검색만 수행");
+            // 정렬 설정
+            setupSorting(searchSourceBuilder, searchParams);
+            
+            // 집계 설정
+            setupAggregations(searchSourceBuilder, searchParams);
             
             searchRequest.source(searchSourceBuilder);
             
@@ -163,6 +166,41 @@ public class PharmacySearchService {
                     boolQuery.filter(QueryBuilders.termQuery("sidoCdNm", region));
                 } else {
                     logger.info("전국 검색이므로 지역 필터 미적용");
+                }
+            }
+            
+            // 위치 기반 검색 필터 추가
+            if (searchParams.containsKey("latitude") && searchParams.containsKey("longitude") && 
+                searchParams.get("latitude") != null && searchParams.get("longitude") != null) {
+                try {
+                    Double latitude = null;
+                    Double longitude = null;
+                    
+                    Object latObj = searchParams.get("latitude");
+                    Object lngObj = searchParams.get("longitude");
+                    
+                    if (latObj instanceof Number) {
+                        latitude = ((Number) latObj).doubleValue();
+                    } else if (latObj instanceof String) {
+                        latitude = Double.parseDouble((String) latObj);
+                    }
+                    
+                    if (lngObj instanceof Number) {
+                        longitude = ((Number) lngObj).doubleValue();
+                    } else if (lngObj instanceof String) {
+                        longitude = Double.parseDouble((String) lngObj);
+                    }
+                    
+                    if (latitude != null && longitude != null) {
+                        String distance = searchParams.getOrDefault("distance", "10km").toString();
+                        logger.info("위치 기반 검색 필터 추가 - 위도: {}, 경도: {}, 거리: {}", latitude, longitude, distance);
+                        
+                        boolQuery.filter(QueryBuilders.geoDistanceQuery("location")
+                            .point(latitude, longitude)
+                            .distance(distance));
+                    }
+                } catch (NumberFormatException e) {
+                    logger.warn("위치 좌표 파싱 실패 - latitude: {}, longitude: {}", searchParams.get("latitude"), searchParams.get("longitude"));
                 }
             }
             

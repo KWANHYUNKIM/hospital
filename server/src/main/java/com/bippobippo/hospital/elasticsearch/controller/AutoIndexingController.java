@@ -246,4 +246,68 @@ public class AutoIndexingController {
                 .body(Map.of("error", "map_data 인덱스 상태 확인 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
+    
+    /**
+     * map_data_cluster 인덱스 생성
+     */
+    @PostMapping("/index/map-cluster/create")
+    public ResponseEntity<Map<String, Object>> createMapClusterIndex() {
+        try {
+            logger.info("🚀 map_data_cluster 인덱스 생성 요청");
+            Map<String, Object> result = autoIndexingService.createMapClusterIndex();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("❌ map_data_cluster 인덱스 생성 중 오류 발생:", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "map_data_cluster 인덱스 생성 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * map_data_cluster 인덱스 삭제
+     */
+    @DeleteMapping("/index/map-cluster")
+    public ResponseEntity<Map<String, Object>> deleteMapClusterIndex() {
+        try {
+            logger.info("🗑️ map_data_cluster 인덱스 삭제 요청");
+            Map<String, Object> result = autoIndexingService.deleteMapClusterIndex();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("❌ map_data_cluster 인덱스 삭제 중 오류 발생:", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "map_data_cluster 인덱스 삭제 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * map_data_cluster 인덱스 상태 확인
+     */
+    @GetMapping("/index/map-cluster/status")
+    public ResponseEntity<Map<String, Object>> getMapClusterIndexStatus() {
+        try {
+            logger.info("🔍 map_data_cluster 인덱스 상태 확인 요청");
+            Map<String, Object> result = autoIndexingService.getMapClusterIndexStatus();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("❌ map_data_cluster 인덱스 상태 확인 중 오류 발생:", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "map_data_cluster 인덱스 상태 확인 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * map_data_cluster 인덱스 데이터 생성 (bulk indexing)
+     */
+    @PostMapping("/index/map-cluster/bulk")
+    public ResponseEntity<Map<String, Object>> bulkMapClusterIndex() {
+        try {
+            logger.info("🚀 map_data_cluster 인덱스 데이터 생성 요청");
+            Map<String, Object> result = autoIndexingService.bulkMapClusterIndex();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("❌ map_data_cluster 인덱스 데이터 생성 중 오류 발생:", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "map_data_cluster 인덱스 데이터 생성 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
 } 
